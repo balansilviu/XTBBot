@@ -2,13 +2,26 @@ import customtkinter as ctk
 from tkinter import ttk, StringVar, Listbox, END
 import shelve, os
 from XTBApi.api import Client
-from Strategies.DualEMAStrategy import DualEMAStrategy
+from Strategies.Strategy import Strategy
+import logging
+logging.disable(logging.CRITICAL)
 
 
 client = Client()
 all_symbols = []
 chart_entry = []
 strategies = []
+trading_bot_window = ctk.CTk()
+app = ctk.CTk()
+
+timeframe_to_minutes = {
+    "1 Minute": 1,
+    "5 Minutes": 5,
+    "15 Minutes": 15,
+    "1 Hour": 60,
+    "4 Hours": 240,
+    "1 Day": 1440  # 24 * 60
+}
 
 def main():
     configureApp()
@@ -34,13 +47,23 @@ def showCustomError(title, message):
     ok_button = ctk.CTkButton(error_window, text="OK", command=error_window.destroy)
     ok_button.pack(pady=10)
 
+def appOnClose():
+    global app
+    
+    app.destroy()
+    app.quit()
+
 # Function to create the login window
 def createLoginWindow():
     global app, username_entry, password_entry, remember_me_var
-    app = ctk.CTk()
+
+
+
     app.title("Login Page")
     app.geometry("300x450")
     app.resizable(False, False)
+
+    app.protocol("WM_DELETE_WINDOW", appOnClose)
 
     login_frame = ctk.CTkFrame(app)
     login_frame.pack(pady=20, padx=20, fill="both", expand=True)
@@ -129,11 +152,23 @@ def loadSavedCredentials():
             password_entry.insert(0, password)
             remember_me_var.set(True)
 
+def onClose():
+    global strategies
+    global trading_bot_window
+
+    for stratrgy in strategies:
+        stratrgy.stop()
+
+    trading_bot_window.destroy()
+
 # Function to open the trading bot interface
 def openTradingBotInterface():
-    trading_bot_window = ctk.CTk()
+    global trading_bot_window
+
     trading_bot_window.title("Trading Bot Interface")
     trading_bot_window.geometry("600x750")
+
+    trading_bot_window.protocol("WM_DELETE_WINDOW", onClose)
 
     createStrategyFrame(trading_bot_window)
 
@@ -263,17 +298,18 @@ def createStrategyTable(strategy_frame):
 
 # Function to add strategy to the table
 def addStrategyToTable(strategy, chart, timeframe, strategy_table):
+    global client
     global strategies
 
     if strategy_table:
         strategy_table.insert("", "end", values=(strategy, chart, timeframe))
-        new_strategy = DualEMAStrategy(chart, 15, 0.01)
-        # new_strategy.fetch_data()
+        new_strategy = Strategy(client, chart, timeframe_to_minutes.get(timeframe, None), 0.01)
         strategies.append(new_strategy)
-        
         first_item = strategy_table.get_children()[0]
         strategy_table.selection_set(first_item)
         strategy_table.focus(first_item)
+
+        strategies[-1].run()
 
 
 # Function to create remove button
@@ -287,6 +323,7 @@ def removeSelectedStrategy(strategy_table):
     selected_item = strategy_table.selection()  # Get selected item
     if selected_item:
         index = strategy_table.index(selected_item)
+        strategies[index].stop()
         strategies.pop(index)
         strategy_table.delete(selected_item)  # Remove the selected item
         DEBUG_PRINT(len(strategies))
