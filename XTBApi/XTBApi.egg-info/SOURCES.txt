@@ -1,0 +1,17 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+XTBApi/__init__.py
+XTBApi/__version__.py
+XTBApi/api.py
+XTBApi/exceptions.py
+XTBApi.egg-info/PKG-INFO
+XTBApi.egg-info/SOURCES.txt
+XTBApi.egg-info/dependency_links.txt
+XTBApi.egg-info/requires.txt
+XTBApi.egg-info/top_level.txt
+XTBApi/logs/.gitkeep
+XTBApi/tests/__init__.py
+XTBApi/tests/test_base_client.py
+XTBApi/tests/test_client.py
