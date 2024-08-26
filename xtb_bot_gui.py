@@ -148,8 +148,12 @@ def createStrategyFrame(trading_bot_window):
 
     strategy_var = createStrategySelection(strategy_frame)
     chart_var, chart_entry = createInstrumentSelection(strategy_frame)
-    timeframe_var, strategy_table = createTimeframeSelection(strategy_frame, strategy_var, chart_var, chart_entry)
-    createStrategyTable(strategy_frame, strategy_table)
+    timeframe_var = createTimeframeSelection(strategy_frame, strategy_var, chart_var, chart_entry)
+    strategy_table = createStrategyTable(strategy_frame)  # Create the strategy table and capture it
+
+    add_button = ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: addStrategyToTable(strategy_var.get(), chart_var.get(), timeframe_var.get(), strategy_table))
+    add_button.pack(pady=10, padx=10, fill="x")
+
     createRemoveButton(strategy_frame, strategy_table)
 
 # Function to create strategy selection elements
@@ -211,8 +215,6 @@ def createInstrumentListbox(strategy_frame, chart_var, instruments):
             if selection:  # Verifică dacă există o selecție
                 selected_instrument = chart_listbox.get(selection[0])  # Ia primul element din selecție
                 chart_var.set(selected_instrument)
-                # Nu este necesar să configurezi itemul selectat cu 'bg', deci elimină această linie:
-                # chart_listbox.itemconfig(selection, {'bg': 'black'})
         except IndexError:
             pass
 
@@ -230,17 +232,10 @@ def createTimeframeSelection(strategy_frame, strategy_var, chart_var, chart_entr
     timeframe_menu = ctk.CTkOptionMenu(strategy_frame, variable=timeframe_var, values=["1 Minute", "5 Minutes", "15 Minutes", "1 Hour", "4 Hours", "1 Day"])
     timeframe_menu.pack(pady=5, padx=10, fill="x")
 
-    # Create a placeholder for the strategy table to be populated later
-    strategy_table = None
-
-    # Button to add strategy to the table
-    add_button = ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: addStrategyToTable(strategy_var.get(), chart_var.get(), timeframe_var.get(), strategy_table))
-    add_button.pack(pady=10, padx=10, fill="x")
-
-    return timeframe_var, strategy_table
+    return timeframe_var
 
 # Function to create the strategy table
-def createStrategyTable(strategy_frame, strategy_table):
+def createStrategyTable(strategy_frame):
     columns = ('Strategy', 'Instrument', 'Timeframe')
     strategy_table = ttk.Treeview(strategy_frame, columns=columns, show='headings')
 
@@ -250,15 +245,17 @@ def createStrategyTable(strategy_frame, strategy_table):
 
     strategy_table.pack(pady=20, padx=10, fill="both", expand=True)
 
-# Function to create remove button
-def createRemoveButton(strategy_frame, strategy_table):
-    remove_button = ctk.CTkButton(strategy_frame, text="Remove Selected Strategy", command=lambda: removeSelectedStrategy(strategy_table))
-    remove_button.pack(pady=10, padx=10, fill="x")
+    return strategy_table  # Return the strategy_table instance
 
 # Function to add strategy to the table
 def addStrategyToTable(strategy, chart, timeframe, strategy_table):
     if strategy_table:
         strategy_table.insert("", "end", values=(strategy, chart, timeframe))
+
+# Function to create remove button
+def createRemoveButton(strategy_frame, strategy_table):
+    remove_button = ctk.CTkButton(strategy_frame, text="Remove Selected Strategy", command=lambda: removeSelectedStrategy(strategy_table))
+    remove_button.pack(pady=10, padx=10, fill="x")
 
 # Function to remove the selected strategy
 def removeSelectedStrategy(strategy_table):
