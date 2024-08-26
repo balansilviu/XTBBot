@@ -1,7 +1,8 @@
 import customtkinter as ctk
 from tkinter import ttk, StringVar, Listbox, END
-import shelve
+import shelve, os
 from XTBApi.api import Client
+
 
 client = Client()
 all_symbols = []
@@ -158,11 +159,15 @@ def createStrategyFrame(trading_bot_window):
 
 # Function to create strategy selection elements
 def createStrategySelection(strategy_frame):
-    strategy_var = ctk.StringVar(value="Moving Average")
+    strategy_var = ctk.StringVar(value="Select Strategy")
     strategy_label = ctk.CTkLabel(strategy_frame, text="Select Strategy:")
     strategy_label.pack(anchor="w", padx=10)
 
-    strategy_menu = ctk.CTkOptionMenu(strategy_frame, variable=strategy_var, values=["Moving Average", "RSI", "MACD", "Bollinger Bands"])
+    # Căutăm toate fișierele .py din folderul Strategies
+    strategies_dir = "Strategies"
+    strategies = [f[:-3] for f in os.listdir(strategies_dir) if f.endswith(".py")]
+
+    strategy_menu = ctk.CTkOptionMenu(strategy_frame, variable=strategy_var, values=strategies)
     strategy_menu.pack(pady=5, padx=10, fill="x")
 
     return strategy_var
@@ -225,7 +230,7 @@ def createInstrumentListbox(strategy_frame, chart_var, instruments):
 
 # Function to create timeframe selection elements
 def createTimeframeSelection(strategy_frame, strategy_var, chart_var, chart_entry):
-    timeframe_var = ctk.StringVar(value="1 Hour")
+    timeframe_var = ctk.StringVar(value="15 Minutes")
     timeframe_label = ctk.CTkLabel(strategy_frame, text="Select Timeframe:")
     timeframe_label.pack(anchor="w", padx=10)
 

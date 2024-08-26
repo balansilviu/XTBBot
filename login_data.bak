@@ -1,2 +1,2 @@
-'username', (0, 20)
-'password', (512, 23)
+'username', (0, 23)
+'password', (512, 24)
