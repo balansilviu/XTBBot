@@ -161,7 +161,7 @@ def createStrategyFrame(trading_bot_window):
 
 # Function to create strategy selection elements
 def createStrategySelection(strategy_frame):
-    strategy_var = ctk.StringVar(value="Select Strategy")
+    
     strategy_label = ctk.CTkLabel(strategy_frame, text="Select Strategy:")
     strategy_label.pack(anchor="w", padx=10)
 
@@ -169,6 +169,13 @@ def createStrategySelection(strategy_frame):
     strategies_dir = "Strategies"
     strategies = [f[:-3] for f in os.listdir(strategies_dir) if f.endswith(".py")]
 
+    if strategies:
+        default_strategy = strategies[0]
+    else:
+        default_strategy = "Select Strategy"  # fallback dacă nu există strategii
+
+
+    strategy_var = ctk.StringVar(value=default_strategy)
     strategy_menu = ctk.CTkOptionMenu(strategy_frame, variable=strategy_var, values=strategies)
     strategy_menu.pack(pady=5, padx=10, fill="x")
 
@@ -183,7 +190,7 @@ def createInstrumentSelection(strategy_frame):
     chart_label = ctk.CTkLabel(strategy_frame, text="Select Instrument:")
     chart_label.pack(anchor="w", padx=10)
 
-    chart_var = StringVar()
+    chart_var = StringVar(value="EURUSD")
     chart_entry = ctk.CTkEntry(strategy_frame, textvariable=chart_var)
     chart_entry.pack(pady=5, padx=10, fill="x")
 
@@ -264,6 +271,9 @@ def addStrategyToTable(strategy, chart, timeframe, strategy_table):
         # new_strategy.fetch_data()
         strategies.append(new_strategy)
         
+        first_item = strategy_table.get_children()[0]
+        strategy_table.selection_set(first_item)
+        strategy_table.focus(first_item)
 
 
 # Function to create remove button
@@ -280,6 +290,12 @@ def removeSelectedStrategy(strategy_table):
         strategies.pop(index)
         strategy_table.delete(selected_item)  # Remove the selected item
         DEBUG_PRINT(len(strategies))
+
+        remaining_items = strategy_table.get_children()
+        if remaining_items:
+            first_item = remaining_items[0]
+            strategy_table.selection_set(first_item)
+            strategy_table.focus(first_item)
         
 
 def DEBUG_PRINT(text):
