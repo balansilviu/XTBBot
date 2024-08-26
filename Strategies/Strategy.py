@@ -35,6 +35,11 @@ class Strategy:
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, 1)
         return candle_history
     
+    def getNLastCandlesDetails(self, timeframe_in_minutes, number_of_candles):
+        candle_history = []
+        candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, number_of_candles)
+        return candle_history
+    
     async def callback(self, timeframe_in_minutes):
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
             self.currentCandle = self.getLastCandleDetails(timeframe_in_minutes)
@@ -42,6 +47,7 @@ class Strategy:
             if self.currentCandle != self.lastCandle:
                 if self.lastCandle != None:
                     self.DEBUG_PRINT("\033[33mNew candle")
+                    self.DEBUG_PRINT("\033[34m" + str(self.getNLastCandlesDetails(timeframe_in_minutes, 20)))
                 self.lastCandle = self.currentCandle
                 
             await asyncio.sleep(1)  # Așteaptă 1 secundă
