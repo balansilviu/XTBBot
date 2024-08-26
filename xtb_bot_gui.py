@@ -2,11 +2,13 @@ import customtkinter as ctk
 from tkinter import ttk, StringVar, Listbox, END
 import shelve, os
 from XTBApi.api import Client
+from Strategies.DualEMAStrategy import DualEMAStrategy
 
 
 client = Client()
 all_symbols = []
 chart_entry = []
+strategies = []
 
 def main():
     configureApp()
@@ -254,8 +256,15 @@ def createStrategyTable(strategy_frame):
 
 # Function to add strategy to the table
 def addStrategyToTable(strategy, chart, timeframe, strategy_table):
+    global strategies
+
     if strategy_table:
         strategy_table.insert("", "end", values=(strategy, chart, timeframe))
+        new_strategy = DualEMAStrategy(chart, 15, 0.01)
+        # new_strategy.fetch_data()
+        strategies.append(new_strategy)
+        
+
 
 # Function to create remove button
 def createRemoveButton(strategy_frame, strategy_table):
@@ -264,9 +273,17 @@ def createRemoveButton(strategy_frame, strategy_table):
 
 # Function to remove the selected strategy
 def removeSelectedStrategy(strategy_table):
+    global strategies
     selected_item = strategy_table.selection()  # Get selected item
     if selected_item:
+        index = strategy_table.index(selected_item)
+        strategies.pop(index)
         strategy_table.delete(selected_item)  # Remove the selected item
+        DEBUG_PRINT(len(strategies))
+        
+
+def DEBUG_PRINT(text):
+    print("DEBUG PRINT:", text)
 
 if __name__ == "__main__":
     main()
