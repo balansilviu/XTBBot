@@ -1,0 +1,2 @@
+# XTBBot
+XTB trading bot
