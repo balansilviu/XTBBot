@@ -8,7 +8,6 @@ Main module
 """
 
 import enum
-import inspect
 import json
 import logging
 import time

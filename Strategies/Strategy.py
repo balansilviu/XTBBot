@@ -1,9 +1,22 @@
 import threading
-import time
 import datetime
-from XTBApi.api import Client, PERIOD
-from multiprocessing import Process
 import asyncio
+from Strategies import indicators
+from enum import Enum
+from XTBApi.api import TRANS_TYPES
+from XTBApi.api import MODES
+
+class Timeframe(Enum):
+    M1 = 1
+    M5 = 5
+    M15 = 15
+    M30 = 30
+    H1 = 60
+    H4 = 240
+    D1 = 1440
+    W1 = 10080
+    MN = 43200
+
 
 class Strategy:
     def __init__(self, client, symbol, timeframe, volume=0.1):
@@ -16,9 +29,10 @@ class Strategy:
         self.lastCandle = None
         self.currentCandle = None
         self.stop_event = threading.Event()
+        self.openTradeCount = 0
     
     def run_strategy(self):
-        asyncio.run(self.callback(1))
+        asyncio.run(self.__tick(1))
 
     def run(self):
         """Run the trading strategy in a separate thread"""
@@ -40,14 +54,54 @@ class Strategy:
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, number_of_candles)
         return candle_history
     
-    async def callback(self, timeframe_in_minutes):
+    def calculateEMA(self, period, timeframe):
+        candle_history = self.getNLastCandlesDetails(timeframe, period)
+        return indicators.EMA(self.extractLabelValues(candle_history, "close"), period)
+    
+    def calculateSMA(self, period, timeframe):
+        candle_history = self.getNLastCandlesDetails(timeframe, period)
+        return indicators.SMA(self.extractLabelValues(candle_history, "close"), period)
+
+    def calculateRSI(self, period, timeframe):
+        candle_history = self.getNLastCandlesDetails(timeframe, period)
+        return indicators.RSI(self.extractLabelValues(candle_history, "close"), period)
+
+    def tick(self):
+        candle_history = self.getNLastCandlesDetails(Timeframe.M15.value, 10)
+        # print (self.extractLabelValues(candle_history, "close"))
+        return 0
+
+    def newCandle(self):
+        self.DEBUG_PRINT("\033[33mEMA: " + str(self.calculateEMA(60, Timeframe.M15.value)))
+        self.DEBUG_PRINT("\033[34mSMA: " + str(self.calculateSMA(60, Timeframe.M15.value)))
+        self.DEBUG_PRINT("\033[35mRSI: " + str(self.calculateRSI(60, Timeframe.M15.value)))
+
+    def extractLabelValues(self, data_list, label):
+        return [d[label] for d in data_list if label in d]
+
+    
+    def openTrade(self):
+        self.client.open_trade(MODES.BUY.value, self.symbol, self.volume)
+
+    def closeTrade(self):
+        try:
+            trades = self.client.update_trades()
+            if trades:
+                order_id = next(iter(trades))
+                self.client.close_trade(order_id)
+            else:
+                self.DEBUG_PRINT("Nu există tranzacții deschise de închis.")
+        except Exception as e:
+            self.DEBUG_PRINT(str(e))
+
+    async def __tick(self, timeframe_in_minutes):
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
+            self.tick()
             self.currentCandle = self.getLastCandleDetails(timeframe_in_minutes)
             
             if self.currentCandle != self.lastCandle:
                 if self.lastCandle != None:
-                    self.DEBUG_PRINT("\033[33mNew candle")
-                    self.DEBUG_PRINT("\033[34m" + str(self.getNLastCandlesDetails(timeframe_in_minutes, 20)))
+                    self.newCandle()
                 self.lastCandle = self.currentCandle
                 
             await asyncio.sleep(1)  # Așteaptă 1 secundă

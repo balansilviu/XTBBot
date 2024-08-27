@@ -4,6 +4,8 @@ import shelve, os
 from XTBApi.api import Client
 from Strategies.Strategy import Strategy
 import logging
+
+
 logging.disable(logging.CRITICAL)
 
 
@@ -167,6 +169,7 @@ def openTradingBotInterface():
 
     trading_bot_window.title("Trading Bot Interface")
     trading_bot_window.geometry("600x750")
+    trading_bot_window.resizable(False, False)
 
     trading_bot_window.protocol("WM_DELETE_WINDOW", onClose)
 
@@ -309,7 +312,8 @@ def addStrategyToTable(strategy, chart, timeframe, strategy_table):
         strategy_table.selection_set(first_item)
         strategy_table.focus(first_item)
 
-        strategies[-1].run()
+        # strategies[-1].run()
+        strategies[-1].openTrade()
 
 
 # Function to create remove button
@@ -323,10 +327,10 @@ def removeSelectedStrategy(strategy_table):
     selected_item = strategy_table.selection()  # Get selected item
     if selected_item:
         index = strategy_table.index(selected_item)
-        strategies[index].stop()
+        # strategies[index].stop()
+        strategies[index].closeTrade()
         strategies.pop(index)
         strategy_table.delete(selected_item)  # Remove the selected item
-        DEBUG_PRINT(len(strategies))
 
         remaining_items = strategy_table.get_children()
         if remaining_items:
