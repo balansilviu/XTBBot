@@ -67,21 +67,28 @@ class Strategy:
         return indicators.RSI(self.extractLabelValues(candle_history, "close"), period)
 
     def tick(self):
-        candle_history = self.getNLastCandlesDetails(Timeframe.M15.value, 10)
-        # print (self.extractLabelValues(candle_history, "close"))
-        return 0
+        #self.DEBUG_PRINT("Close price: " + str(self.getCurrentCandleClose()))
+        pass
 
     def newCandle(self):
-        self.DEBUG_PRINT("\033[33mEMA: " + str(self.calculateEMA(60, Timeframe.M15.value)))
-        self.DEBUG_PRINT("\033[34mSMA: " + str(self.calculateSMA(60, Timeframe.M15.value)))
-        self.DEBUG_PRINT("\033[35mRSI: " + str(self.calculateRSI(60, Timeframe.M15.value)))
+        pass
+        #self.DEBUG_PRINT("\033[33mNew candle: " + "Current close = " + str(self.getCurrentCandleClose()) + ", current open = " + str(self.getCurrentCandleOpen()) + ", EMA20 = " + str(self.calculateEMA(20, Timeframe.M1.value)) + ", EMA60 = " + str(self.calculateEMA(60, Timeframe.M1.value)))
 
     def extractLabelValues(self, data_list, label):
         return [d[label] for d in data_list if label in d]
 
+    def getCurrentCandleClose(self):
+        return self.getLastCandleDetails(self.timeframe)[0]['close']
+    
+    def getCurrentCandleOpen(self):
+        return self.getLastCandleDetails(self.timeframe)[0]['open']
+    
+    def getLastCandleClose(self):
+        return self.getNLastCandlesDetails(self.timeframe,2)[0]['close']
     
     def openTrade(self):
         self.client.open_trade(MODES.BUY.value, self.symbol, self.volume)
+        
 
     def closeTrade(self):
         try:
@@ -110,4 +117,4 @@ class Strategy:
     def DEBUG_PRINT(self, text):
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
-        print(f"{current_time} DualEMAStrategy - DEBUG PRINT: {text}{reset_color}")
+        print(f"{current_time} DEBUG PRINT: {text}{reset_color}")
