@@ -1,6 +1,7 @@
 from views.MainWindow import MainWindow
 from models.AppManager import AppManager
 from strategies.Strategy import Strategy
+from strategies.Strategies.DualEMAStrategy import DualEMAStrategy
 
 class MainWindowController:
     def __init__(self, client, all_symbols):
@@ -18,10 +19,15 @@ class MainWindowController:
             strategy_table.insert("", "end", values=(strategy, chart, timeframe))
             
             # Update strategies vector and start the strategy
-            new_strategy = Strategy(self.client, chart, timeframe)
+
+            class_instance = globals()[strategy]
+
+            new_strategy = class_instance(self.client, chart, timeframe)
             self.appManager.strategyManager.AddStrategy(new_strategy)
             
-            # Update table 
+            # Update table
+
+        
             strategy_table.selection_set(strategy_table.get_children()[0])
             strategy_table.focus(strategy_table.get_children()[0])
 

@@ -1,6 +1,22 @@
 from strategies.Strategy import Strategy
 from ta.trend import EMAIndicator
+import ta
 import pandas as pd
+from enum import Enum
+
+class PriceState(Enum):
+    NOT_CONFIG = 0
+    OVER_HIGH_EMA = 1
+    BETWEEN_EMAS = 2
+    UNDER_LOW_EMA = 3
+    WAITING_SIGNAL = 4
+    FIRST_BUY = 5
+    SECOND_BUY = 6
+
+class TransactionState(Enum):
+    NOT_CONFIG = 0
+    BUY = 1
+    SELL = 2
 
 class DualEMAStrategy(Strategy):
     def __init__(self, client, symbol, timeframe, volume=0.1):
@@ -10,6 +26,8 @@ class DualEMAStrategy(Strategy):
         self.underLowestEma = False
         self.consecutiveNegativeCandles = 0
         self.inTrade = False
+        self.priceState = PriceState.NOT_CONFIG
+        self.transactionState = TransactionState.NOT_CONFIG 
         
 
     def getHighestEma(self):
@@ -42,58 +60,80 @@ class DualEMAStrategy(Strategy):
             super().DEBUG_PRINT("\033[37mCross down lowest EMA")
         return returnValue
 
-    def buyCheck(self):
+    def pricesUpdates(self):
+        current_price = super().getCurrentCandleClose()
+        lowestEma = self.getLowestEma()
+        highestEma = self.getHighestEma()
+        if current_price > highestEma:
+            self.priceState = PriceState.OVER_HIGH_EMA
+        elif current_price < lowestEma:
+            self.priceState = PriceState.UNDER_LOW_EMA
+        else:
+            self.priceState = PriceState.BETWEEN_EMAS
+    
+    def executeStrategy(self):
+        super().DEBUG_PRINT("\033[37mCallback")
+        self.dispatchPriceStateMachine()
+        self.dispatchTransactionStateMachine()
 
-        returnValue = False
-
-        if self.crossDownEma():
-            self.consecutiveNegativeCandles = 0
-            self.underLowestEma = True
-            returnValue = False
-
-        if self.underLowestEma:
-            if super().getLastCandleClose() < self.getLowestEma() and super().getCurrentCandleClose() > self.getLowestEma():
-                self.consecutiveNegativeCandles = 0
-                self.underLowestEma = False
-                return False
+    def dispatchPriceStateMachine(self):
+        # Logic if the price is not configured
+        if self.priceState == PriceState.NOT_CONFIG:
+            super().DEBUG_PRINT("\033[37mNOT_CONFIG")
             
-            if self.consecutiveNegativeCandles == 0:
-                self.consecutiveNegativeCandles += 1
 
-            if self.consecutiveNegativeCandles == 1:
-                if super().getCurrentCandleClose() < super().getLastCandleClose():
-                    self.consecutiveNegativeCandles = self.consecutiveNegativeCandles + 1
-                    returnValue = False
-                else:
-                    self.consecutiveNegativeCandles = 0
-                    returnValue = False
+        # Logic if the price is over the highest EMA
+        elif self.priceState == PriceState.OVER_HIGH_EMA:
+            super().DEBUG_PRINT("\033[37mOVER_HIGH_EMA")
+            if self.transactionState == TransactionState.BUY:
+                self.transactionState = TransactionState.SELL
 
-            if self.consecutiveNegativeCandles == 2:
-                if super().getCurrentCandleClose() < super().getLastCandleClose():
-                    returnValue = True
-                else:
-                    self.consecutiveNegativeCandles = 0
-                    returnValue = False
-        
-        return returnValue 
-        
+        # Logic if the price is between EMAs
+        elif self.priceState == PriceState.BETWEEN_EMAS:
+            super().DEBUG_PRINT("\033[37mBETWEEN_EMAS")
 
-    def closeCheck(self):
-        returnValue = False
-        if super().getLastCandleClose() < self.getHighestEma() and super().getCurrentCandleClose() > self.getHighestEma():
-            returnValue = True
-        return returnValue
+        # Logic if the price is under the lowest EMA
+        elif self.priceState == PriceState.UNDER_LOW_EMA:
+            super().DEBUG_PRINT("\033[37mUNDER_LOW_EMA")
+            if self.priceState == PriceState.UNDER_LOW_EMA:
+                self.priceState = PriceState.WAITING_SIGNAL
 
-    def newCandle(self):
-        
-        pass 
-        # super().newCandle()  
+        # Wait for the signal to occur
+        elif self.priceState == PriceState.WAITING_SIGNAL:
+            super().DEBUG_PRINT("\033[37mWAITING_SIGNAL")
+            if self.priceState == PriceState.UNDER_LOW_EMA:
+                self.priceState = PriceState.FIRST_BUY
 
-        # if self.buyCheck() and not self.inTrade:
-        #     # self.openTrade()
-        #     super().DEBUG_PRINT("\033[32mOpen trade")
-        #     self.inTrade = True
-        # if self.closeCheck() and self.inTrade:
-        #     # self.closeTrade()
-        #     super().DEBUG_PRINT("\033[31mClose trade")
-        #     self.inTrade = False
+        # Logic if the pric
+        elif self.priceState == PriceState.FIRST_BUY:
+            super().DEBUG_PRINT("\033[37mFIRST_BUY")
+            if self.transactionState == TransactionState.SELL:
+                self.transactionState = TransactionState.BUY
+
+ 
+        else:
+            pass
+
+        self.pricesUpdates()
+
+    def dispatchTransactionStateMachine(self):
+        # Transaction dispatch states
+        if self.transactionState == TransactionState.NOT_CONFIG:
+            pass
+
+        elif self.transactionState == TransactionState.BUY:
+            super().DEBUG_PRINT("\033[32m==============BUY==============")
+            self.openTrade()
+
+        elif self.transactionState == TransactionState.SELL:
+            super().DEBUG_PRINT("\033[31m==============SELL==============")
+            self.closeTrade()
+        else:
+            pass
+
+
+    def newCandle(self):  
+        super().newCandle()
+        super().DEBUG_PRINT("\033[32mNEW CANDLE")
+        self.executeStrategy()  
+

@@ -71,7 +71,7 @@ class Strategy:
         pass
 
     def newCandle(self):
-        self.DEBUG_PRINT("\033[33mNew candle")
+        # self.DEBUG_PRINT("\033[33mNew candle")
         pass
 
     def extractLabelValues(self, data_list, label):
@@ -102,6 +102,7 @@ class Strategy:
             self.DEBUG_PRINT(str(e))
 
     async def __tick(self, timeframe_in_minutes):
+        self.DEBUG_PRINT("\033[33mThread started.")
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
             self.tick()
             self.currentCandle = self.getLastCandleDetails(timeframe_in_minutes)
@@ -109,6 +110,7 @@ class Strategy:
             if self.currentCandle != self.lastCandle:
                 if self.lastCandle != None:
                     self.newCandle()
+                    # self.DEBUG_PRINT("\033[33mNew candle.")
                 self.lastCandle = self.currentCandle
                 
             await asyncio.sleep(1)  # Așteaptă 1 secundă
