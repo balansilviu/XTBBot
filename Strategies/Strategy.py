@@ -56,23 +56,23 @@ class Strategy:
     
     def calculateEMA(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
-        return indicators.EMA(self.extractLabelValues(candle_history, "close"), period)
+        return Indicators.EMA(self.extractLabelValues(candle_history, "close"), period)
     
     def calculateSMA(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
-        return indicators.SMA(self.extractLabelValues(candle_history, "close"), period)
+        return Indicators.SMA(self.extractLabelValues(candle_history, "close"), period)
 
     def calculateRSI(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
-        return indicators.RSI(self.extractLabelValues(candle_history, "close"), period)
+        return Indicators.RSI(self.extractLabelValues(candle_history, "close"), period)
 
     def tick(self):
         #self.DEBUG_PRINT("Close price: " + str(self.getCurrentCandleClose()))
         pass
 
     def newCandle(self):
+        self.DEBUG_PRINT("\033[33mNew candle")
         pass
-        #self.DEBUG_PRINT("\033[33mNew candle: " + "Current close = " + str(self.getCurrentCandleClose()) + ", current open = " + str(self.getCurrentCandleOpen()) + ", EMA20 = " + str(self.calculateEMA(20, Timeframe.M1.value)) + ", EMA60 = " + str(self.calculateEMA(60, Timeframe.M1.value)))
 
     def extractLabelValues(self, data_list, label):
         return [d[label] for d in data_list if label in d]

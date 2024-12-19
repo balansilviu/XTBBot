@@ -18,6 +18,9 @@ from websocket._exceptions import WebSocketConnectionClosedException
 from XTBApi.exceptions import *
 
 LOGGER = logging.getLogger('XTBApi.api')
+logging.disable(logging.CRITICAL)
+
+
 LOGIN_TIMEOUT = 120
 MAX_TIME_INTERVAL = 0.200
 

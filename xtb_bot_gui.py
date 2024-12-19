@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import ttk, StringVar, Listbox, END
 import shelve, os
 from XTBApi.api import Client
-from Strategies.DualEMAStrategy import DualEMAStrategy
+from strategies.Strategies.DualEMAStrategy import DualEMAStrategy
 import logging
 
 

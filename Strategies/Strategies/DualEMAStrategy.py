@@ -85,6 +85,7 @@ class DualEMAStrategy(Strategy):
         return returnValue
 
     def newCandle(self):
+        
         pass 
         # super().newCandle()  
 
