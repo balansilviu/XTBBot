@@ -46,8 +46,6 @@ class DualEMAStrategy(Strategy):
         ema20_value = self.calculateEMA(self.ema20, self.timeframe)
         ema60_value = self.calculateEMA(self.ema60, self.timeframe)
 
-        ema20_value = EMAIndicator()
-
         # Returnează EMA-ul cel mai mare
         highest_ema = max(ema20_value, ema60_value)
         return highest_ema
@@ -56,8 +54,6 @@ class DualEMAStrategy(Strategy):
         # Calculează valorile EMA pentru perioadele specificate
         ema20_value = self.calculateEMA(self.ema20, self.timeframe)
         ema60_value = self.calculateEMA(self.ema60, self.timeframe)
-
-        ema20_value = ta.EMA()
 
         # Returnează EMA-ul cel mai mic
         lowest_ema = min(ema20_value, ema60_value)
@@ -83,7 +79,6 @@ class DualEMAStrategy(Strategy):
             self.priceState = PriceState.BETWEEN_EMAS
     
     def executeStrategy(self):
-        super().DEBUG_PRINT("\033[37mCallback")
         self.dispatchPriceStateMachine()
         self.dispatchTransactionStateMachine()
 
