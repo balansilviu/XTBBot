@@ -2,6 +2,18 @@ from views.MainWindow import MainWindow
 from models.AppManager import AppManager
 from strategies.Strategy import Strategy
 from strategies.Strategies.DualEMAStrategy import DualEMAStrategy
+from enum import Enum
+
+class Timeframe(Enum):
+    M1 = 1
+    M5 = 5
+    M15 = 15
+    M30 = 30
+    H1 = 60
+    H4 = 240
+    D1 = 1440
+    W1 = 10080
+    MN = 43200
 
 class MainWindowController:
     def __init__(self, client, all_symbols):
@@ -22,7 +34,7 @@ class MainWindowController:
 
             class_instance = globals()[strategy]
 
-            new_strategy = class_instance(self.client, chart, timeframe)
+            new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value)
             self.appManager.strategyManager.AddStrategy(new_strategy)
             
             # Update table

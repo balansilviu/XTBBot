@@ -4,6 +4,17 @@ import ta
 import pandas as pd
 from enum import Enum
 
+class Timeframe(Enum):
+    M1 = 1
+    M5 = 5
+    M15 = 15
+    M30 = 30
+    H1 = 60
+    H4 = 240
+    D1 = 1440
+    W1 = 10080
+    MN = 43200
+
 class PriceState(Enum):
     NOT_CONFIG = 0
     OVER_HIGH_EMA = 1
@@ -134,6 +145,5 @@ class DualEMAStrategy(Strategy):
 
     def newCandle(self):  
         super().newCandle()
-        super().DEBUG_PRINT("\033[32mNEW CANDLE")
         self.executeStrategy()  
 

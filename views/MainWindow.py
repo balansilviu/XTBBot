@@ -81,7 +81,7 @@ class MainWindow:
     def CreateTimeframeSelection(self, strategy_frame, strategy_var, chart_var):
         ctk.CTkLabel(strategy_frame, text="Select Timeframe:").pack(anchor="w", padx=10)
         timeframe_var = StringVar(value="1 Hour")
-        ctk.CTkOptionMenu(strategy_frame, variable=timeframe_var, values=["1 Minute", "5 Minutes", "15 Minutes", "1 Hour", "4 Hours", "1 Day"]).pack(pady=5, padx=10, fill="x")
+        ctk.CTkOptionMenu(strategy_frame, variable=timeframe_var, values=["M1", "M5", "M30", "H1", "H4", "D1", "W1", "MN"]).pack(pady=5, padx=10, fill="x")
         return timeframe_var
 
     def CreateStrategyTable(self, strategy_frame):
