@@ -1,7 +1,7 @@
 import shelve
 from models.ClientManager import ClientManager
-from views.login_window import LoginWindow
-from controllers.main_window_controller import MainWindowController
+from views.LoginWindow import LoginWindow
+from controllers.MainWindowController import MainWindowController
 
 class LoginWindowController:
     def __init__(self, app):

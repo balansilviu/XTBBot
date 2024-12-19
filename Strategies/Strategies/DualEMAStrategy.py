@@ -1,4 +1,4 @@
-from Strategies.Strategy import Strategy
+from strategies.Strategy import Strategy
 from ta.trend import EMAIndicator
 import pandas as pd
 

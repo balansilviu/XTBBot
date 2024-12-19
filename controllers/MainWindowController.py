@@ -1,11 +1,13 @@
-from views.main_window import MainWindow
+from views.MainWindow import MainWindow
+from models.AppManager import AppManager
+from strategies.Strategy import Strategy
 
 class MainWindowController:
     def __init__(self, client, all_symbols):
         self.client = client
         self.all_symbols = all_symbols
-        self.strategies = []
         self.main_window = None
+        self.appManager = AppManager()
 
     def CreateMainWindow(self):
         self.main_window = MainWindow(self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy)
@@ -14,18 +16,21 @@ class MainWindowController:
     def AddStrategyToTable(self, strategy, chart, timeframe, strategy_table):
         if strategy_table:
             strategy_table.insert("", "end", values=(strategy, chart, timeframe))
-            # new_strategy = ClientManager().CreateStrategy(self.client, chart, timeframe)
-            # self.strategies.append(new_strategy)
+            
+            # Update strategies vector and start the strategy
+            new_strategy = Strategy(self.client, chart, timeframe)
+            self.appManager.strategyManager.AddStrategy(new_strategy)
+            
+            # Update table 
             strategy_table.selection_set(strategy_table.get_children()[0])
             strategy_table.focus(strategy_table.get_children()[0])
-            # self.strategies[-1].Run()
 
     def RemoveSelectedStrategy(self, strategy_table):
         selected_item = strategy_table.selection()
         if selected_item:
             index = strategy_table.index(selected_item)
-            self.strategies[index].Stop()
-            self.strategies.pop(index)
+            self.appManager.strategyManager.DeleteStrategy(index)
+            
             strategy_table.delete(selected_item)
 
             if strategy_table.get_children():
@@ -34,6 +39,5 @@ class MainWindowController:
                 strategy_table.focus(first_item)
 
     def OnClose(self):
-        for strategy in self.strategies:
-            strategy.Stop()
+        self.appManager.strategyManager.StopAllStrategies()
         self.main_window.Close()

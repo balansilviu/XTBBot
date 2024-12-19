@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from controllers.login_window_controller import LoginWindowController
+from controllers.LoginWindowController import LoginWindowController
 
 class AppController:
     def __init__(self):

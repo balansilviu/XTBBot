@@ -1,7 +1,7 @@
 import threading
 import datetime
 import asyncio
-from Strategies import indicators
+from strategies import Indicators
 from enum import Enum
 from XTBApi.api import TRANS_TYPES
 from XTBApi.api import MODES
