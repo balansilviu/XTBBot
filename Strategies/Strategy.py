@@ -55,7 +55,7 @@ class Strategy:
         return candle_history
     
     def calculateEMA(self, period, timeframe):
-        candle_history = self.getNLastCandlesDetails(timeframe, period)
+        candle_history = self.getNLastCandlesDetails(timeframe, 5000)
         return Indicators.EMA(self.extractLabelValues(candle_history, "close"), period)
     
     def calculateSMA(self, period, timeframe):
@@ -117,6 +117,9 @@ class Strategy:
         self.DEBUG_PRINT("\033[33mThread stopped.")
 
     def DEBUG_PRINT(self, text):
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Obține timpul curent și scade un minut
+        current_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
+        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        
         reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
-        print(f"{current_time} DEBUG PRINT: {text}{reset_color}")
+        print(f"{formatted_time} DEBUG PRINT: {text}{reset_color}")
