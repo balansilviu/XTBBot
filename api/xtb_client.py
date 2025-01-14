@@ -98,6 +98,8 @@ class BaseClient(object):
         self._login_data = None
         self._time_last_request = time.time() - MAX_TIME_INTERVAL
         self.status = STATUS.NOT_LOGGED
+        self.username = []
+        self.password = []
         LOGGER.debug("BaseClient initialized")
         self.LOGGER = logging.getLogger('XTBApi.api.BaseClient')
 
@@ -141,12 +143,25 @@ class BaseClient(object):
         return self._login_decorator(self._send_command, dict_data)
 
     def login(self, user_id, password, mode='demo'):
+        self.username = user_id
+        self.password = password
         """login command"""
         data = _get_data("login", userId=user_id, password=password)
         print(f"Sending data: {data}")  # For debugging
         self.ws = create_connection(f"wss://ws.xtb.com/{mode}")
         response = self._send_command(data)
         self._login_data = (user_id, password)
+        self.status = STATUS.LOGGED
+        self.LOGGER.info("Login command executed")
+        return response
+    
+    def retry_login(self, mode='demo'):
+        """login command"""
+        data = _get_data("login", userId=self.username, password=self.password)
+        # print(f"Sending data: {data}")  # For debugging
+        self.ws = create_connection(f"wss://ws.xtb.com/{mode}")
+        response = self._send_command(data)
+        self._login_data = (self.username, self.password)
         self.status = STATUS.LOGGED
         self.LOGGER.info("Login command executed")
         return response
@@ -390,7 +405,7 @@ class Client(BaseClient):
         self.LOGGER.info(f"Got trade profit of {profit}")
         return profit
 
-    def open_trade(self, mode, symbol, volume):
+    def open_trade(self, mode, symbol, volume, stop_loss=0, take_profit=0):
         """open trade transaction"""
         if mode in [MODES.BUY.value, MODES.SELL.value]:
             mode = [x for x in MODES if x.value == mode][0]
@@ -404,7 +419,7 @@ class Client(BaseClient):
         self.LOGGER.debug(f"Opening trade of {symbol} of {volume} with {mode_name}")
         conversion_mode = {MODES.BUY.value: 'ask', MODES.SELL.value: 'bid'}
         price = self.get_symbol(symbol)[conversion_mode[mode]]
-        response = self.trade_transaction(symbol, mode, 0, volume, price=price)
+        response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=stop_loss, take_profit=take_profit, price=price)
         self.update_trades()
         status = self.trade_transaction_status(response['order'])['requestStatus']
         self.LOGGER.debug(f"open_trade completed with status of {status}")

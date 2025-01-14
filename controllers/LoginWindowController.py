@@ -1,12 +1,13 @@
 import shelve
-from models.ClientManager import ClientManager
+
 from views.LoginWindow import LoginWindow
 from controllers.MainWindowController import MainWindowController
 
 class LoginWindowController:
-    def __init__(self, app):
+    def __init__(self, app, appManager):
         self.app = app
-        self.client = ClientManager().GetClient()
+        self.appManager = appManager
+        self.client = self.appManager.GetClientManager().GetClient()
         self.all_symbols = []
         self.login_window = None
 
@@ -20,6 +21,8 @@ class LoginWindowController:
 
     def OnLogin(self):
         username, password, remember_me = self.login_window.GetCredentials()
+        self.appManager.GetClientManager().username = username
+        self.appManager.GetClientManager().password = password
 
         try:
             response = self.client.login(username, password)

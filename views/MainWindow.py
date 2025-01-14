@@ -2,6 +2,16 @@ import os
 import customtkinter as ctk
 from tkinter import StringVar, Listbox, END, ttk
 
+import os
+import glob
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+strategies_dir = os.path.join(base_dir, "strategies/Strategies")
+modules = glob.glob(os.path.join(strategies_dir, "*.py"))
+__all__ = [os.path.basename(f)[:-3] for f in modules if f.endswith(".py") and f != "__init__.py"]
+
+for module in __all__:
+    __import__(f"strategies.Strategies.{module}")
+
 class MainWindow:
     def __init__(self, on_close, all_symbols, add_strategy_to_table, remove_selected_strategy):
         self.on_close = on_close
@@ -80,7 +90,7 @@ class MainWindow:
 
     def CreateTimeframeSelection(self, strategy_frame, strategy_var, chart_var):
         ctk.CTkLabel(strategy_frame, text="Select Timeframe:").pack(anchor="w", padx=10)
-        timeframe_var = StringVar(value="1 Hour")
+        timeframe_var = StringVar(value="M1")
         ctk.CTkOptionMenu(strategy_frame, variable=timeframe_var, values=["M1", "M5", "M30", "H1", "H4", "D1", "W1", "MN"]).pack(pady=5, padx=10, fill="x")
         return timeframe_var
 

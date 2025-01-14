@@ -55,7 +55,7 @@ class Strategy:
         return candle_history
     
     def calculateEMA(self, period, timeframe):
-        candle_history = self.getNLastCandlesDetails(timeframe, 5000)
+        candle_history = self.getNLastCandlesDetails(timeframe, 3 * period)
         return Indicators.EMA(self.extractLabelValues(candle_history, "close"), period)
     
     def calculateSMA(self, period, timeframe):
@@ -101,6 +101,13 @@ class Strategy:
         except Exception as e:
             self.DEBUG_PRINT(str(e))
 
+    def RetryLogin(self):
+        try:
+            self.client.retry_login()
+        except Exception as e:
+            self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
+        pass
+
     async def __tick(self, timeframe_in_minutes):
         self.DEBUG_PRINT("\033[33mThread started.")
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
@@ -110,6 +117,7 @@ class Strategy:
             if self.currentCandle != self.lastCandle:
                 if self.lastCandle != None:
                     self.newCandle()
+                    self.RetryLogin()
                     # self.DEBUG_PRINT("\033[33mNew candle.")
                 self.lastCandle = self.currentCandle
                 
@@ -118,7 +126,7 @@ class Strategy:
 
     def DEBUG_PRINT(self, text):
         # Obține timpul curent și scade un minut
-        current_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
+        current_time = datetime.datetime.now() - datetime.timedelta(minutes=0)
         formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
         
         reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii

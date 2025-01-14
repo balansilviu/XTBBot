@@ -1,8 +1,43 @@
 from views.MainWindow import MainWindow
 from models.AppManager import AppManager
 from strategies.Strategy import Strategy
-from strategies.Strategies.DualEMAStrategy import DualEMAStrategy
 from enum import Enum
+
+import os
+import glob
+import inspect
+import importlib
+
+# Specifică folderul unde se află modulele
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))  # Un nivel mai sus
+strategies_dir = os.path.join(base_dir, "strategies/Strategies")
+
+# Găsește toate fișierele Python din folder
+modules = glob.glob(os.path.join(strategies_dir, "*.py"))
+
+# Dictionar temporar pentru stocarea claselor
+classes_to_add = {}
+
+for module_path in modules:
+    # Exclude `__init__.py` și alte fișiere care nu sunt module Python valide
+    if not module_path.endswith("__init__.py") and module_path.endswith(".py"):
+        module_name = f"strategies.Strategies.{os.path.basename(module_path)[:-3]}"
+        
+        # Importă modulul
+        module = importlib.import_module(module_name)
+        
+        # Găsește toate clasele definite în modul
+        for name, obj in inspect.getmembers(module):
+            if inspect.isclass(obj) and obj.__module__ == module_name:
+                # Adaugă clasa într-un dicționar temporar
+                classes_to_add[name] = obj
+
+# Adaugă toate clasele din dicționar la `globals()` după încheierea iterației
+globals().update(classes_to_add)
+
+# Testare: clasele sunt acum disponibile în `globals()`
+for strategy_name in classes_to_add:
+    print(f"Loaded class: {strategy_name}")
 
 class Timeframe(Enum):
     M1 = 1
@@ -32,6 +67,7 @@ class MainWindowController:
             
             # Update strategies vector and start the strategy
 
+            print(strategy)
             class_instance = globals()[strategy]
 
             new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value)
