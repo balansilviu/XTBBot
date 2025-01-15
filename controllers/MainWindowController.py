@@ -68,7 +68,6 @@ class MainWindowController:
             
             # Update strategies vector and start the strategy
 
-            print(strategy)
             class_instance = globals()[strategy]
 
             new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value, float(stop_loss))

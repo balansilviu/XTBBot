@@ -242,7 +242,7 @@ class DualEMA_Martingale_Tester(Strategy):
         #     self.executeStrategy(i)
         #     pass
 
-        print(self.WasLastTradeProfitable())
+        print(self.getLastTimestamp())
 
     def newCandle(self):  
         pass

@@ -31,8 +31,8 @@ class Strategy:
         self.volume = volume
         self.thread = None
         self.process = None
-        self.lastCandle = None
-        self.currentCandle = None
+        self.lastCandle = 0
+        self.currentCandle = 0
         self.stop_event = threading.Event()
         self.openTradeCount = 0
         self.appRetryConnectCount = 0
@@ -113,6 +113,11 @@ class Strategy:
     def getCurrentCandleOpen(self):
         return self.getLastCandleDetails(self.timeframe)[0]['open']
     
+    def getLastTimestamp(self):
+        candle_history = self.getNLastCandlesDetails(self.timeframe, 1)
+        timestamp = self.extractLabelValues(candle_history, "timestamp")
+        return timestamp[0]
+
     def getLastCandleClose(self):
         return self.getNLastCandlesDetails(self.timeframe,2)[0]['close']
     
@@ -145,12 +150,12 @@ class Strategy:
         self.DEBUG_PRINT("\033[33mThread started.")
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
             self.tick()
-            self.currentCandle = self.getLastCandleDetails(timeframe_in_minutes)
+            self.currentCandle = self.getLastTimestamp()
             
             if self.currentCandle != self.lastCandle:
                 if self.lastCandle != None:
+                    
                     self.newCandle()
-
                     if self.appRetryConnectCount == 10:
                         self.RetryLogin()
                         self.appRetryConnectCount = 0
