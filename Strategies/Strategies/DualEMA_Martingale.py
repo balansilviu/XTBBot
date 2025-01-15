@@ -49,6 +49,10 @@ class DualEMA_Martingale(Strategy):
         self.last_price = 0
         self.lowestEma = 0
         self.highestEma = 0
+        self.initialLot = 0.5
+        self.currentLot = self.initialLot
+        self.maximumLot = 2
+        self.stopLoss_Pips = 10
         
 
     def getHighestEma(self):
@@ -103,11 +107,11 @@ class DualEMA_Martingale(Strategy):
         elif self.priceState == PriceState.UNDER_LOW_EMA:
             
             if self.transactionPermision == TransactionPermision.NOT_ALLOWED:
-                super().DEBUG_PRINT("\033mUNDER_LOW_EMA")
+                super().DEBUG_PRINT("\033mUNDER_LOW_EMA - Transaction not allowed")
             else:
                 if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.OVER_HIGH_EMA:
                     self.priceState = PriceState.WAIT_CONFIRMATION
-                    super().DEBUG_PRINT("\033mUNDER_LOW_EMA - WAIT CONFIRMATION")
+                    super().DEBUG_PRINT("\033mUNDER_LOW_EMA - CROSS - WAIT CONFIRMATION")
                 
                 elif self.lastPriceState == PriceState.WAIT_CONFIRMATION:
                     if self.current_price < self.last_price:
@@ -129,6 +133,7 @@ class DualEMA_Martingale(Strategy):
                         super().DEBUG_PRINT("\033mUNDER_LOW_EMA - WAIT TWO NEGATIVES")
 
                 else:
+                    super().DEBUG_PRINT("\033mSTATE = " + str(self.priceState))
                     super().DEBUG_PRINT("\033mUNDER_LOW_EMA")
 
         else:
@@ -142,12 +147,20 @@ class DualEMA_Martingale(Strategy):
         if self.transactionState == TransactionState.BUY:
             super().DEBUG_PRINT("\033[32m==============BUY===============")
             self.transactionState = TransactionState.TRADE_OPEN
-            self.openTrade()
+            self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
         elif self.transactionState == TransactionState.SELL:
             super().DEBUG_PRINT("\033[31m==============SELL==============")
             self.transactionState = TransactionState.TRADE_CLOSED
-            self.closeTrade()    
+            self.closeTrade()
+
+            if self.wasLastTradeClosedByStopLoss():
+                self.currentLot = self.currentLot * 2
+                if self.currentLot >= self.maximumLot:
+                    self.currentLot = self.maximumLot 
+            else:
+                self.currentLot = self.initialLot
+
         
         else:
             pass

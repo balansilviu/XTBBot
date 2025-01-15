@@ -453,9 +453,9 @@ class Client(BaseClient):
         price = self.get_symbol(symbol)[conversion_mode[mode]]
         if mode == MODES.BUY.value:
             print(price-stop_loss)
-            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=(price-stop_loss), take_profit=take_profit, price=price)
+            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price-stop_loss),5), take_profit=take_profit, price=price)
         else:
-            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=(price+stop_loss), take_profit=take_profit, price=price)
+            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price+stop_loss),5), take_profit=take_profit, price=price)
         self.update_trades()
         status = self.trade_transaction_status(response['order'])['requestStatus']
         self.LOGGER.debug(f"open_trade completed with status of {status}")
