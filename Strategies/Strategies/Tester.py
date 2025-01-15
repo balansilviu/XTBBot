@@ -61,48 +61,31 @@ class Tester(Strategy):
         self.dispatchTransactionStateMachine()
 
     def dispatchPriceStateMachine(self):
-        
-        if (self.priceState == PriceState.NOT_CONFIG):
-            if (self.current_price >= self.smaPrice):
-                self.smaPrice = PriceState.OVER_SMA
-            else:
-                self.smaPrice = PriceState.UNDER_SMA
-        
-        elif (self.priceState == PriceState.OVER_SMA):
-            if (self.current_price >= self.smaPrice):
-                self.smaPrice = PriceState.OVER_SMA
-            else:
-                self.smaPrice = PriceState.UNDER_SMA
-                self.transactionState = TransactionState.SELL
-
-        elif (self.priceState == PriceState.UNDER_SMA):
-            if (self.current_price >= self.smaPrice):
-                self.smaPrice = PriceState.OVER_SMA
-                self.transactionState = TransactionState.BUY
-            else:
-                self.smaPrice = PriceState.UNDER_SMA
-
-        else:
-            pass
-            
-        
-        
-        self.printStates()
+        pass
 
 
         
 
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
-        if self.transactionState == TransactionState.WAITING:
-            pass
-        elif self.transactionState == TransactionState.BUY:
+        if self.transactionState == TransactionState.BUY:
             super().DEBUG_PRINT("\033[32m==============BUY===============")
-            self.openTrade()
+            self.transactionState = TransactionState.TRADE_OPEN
+            self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
         elif self.transactionState == TransactionState.SELL:
             super().DEBUG_PRINT("\033[31m==============SELL==============")
+            self.transactionState = TransactionState.TRADE_CLOSED
             self.closeTrade()
+
+            if self.wasLastTradeClosedByStopLoss():
+                self.currentLot = self.currentLot * 2
+                if self.currentLot >= self.maximumLot:
+                    self.currentLot = self.maximumLot 
+            else:
+                self.currentLot = self.initialLot
+
+        
         else:
             pass
 

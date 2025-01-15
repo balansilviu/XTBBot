@@ -1,6 +1,7 @@
 from views.MainWindow import MainWindow
 from models.AppManager import AppManager
 from strategies.Strategy import Strategy
+from strategies.Strategies.DualEMA_Martingale_Tester import DualEMA_Martingale_Tester
 from enum import Enum
 
 import os
@@ -98,9 +99,10 @@ class MainWindowController:
 
     def Test2ButtonAction(self, chart, timeframe):
         # print(self.client.get_last_closed_trade())
-        strategy = Strategy(self.client, chart, timeframe, volume=0.1)
 
-        print(strategy.wasLastTradeClosedByStopLoss())
+        strategy = DualEMA_Martingale_Tester(self.client, chart, Timeframe[timeframe].value, volume=0.1)
+
+        strategy.Test()
         
         pass
 
