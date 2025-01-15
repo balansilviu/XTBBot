@@ -153,6 +153,5 @@ class DualEMA_Martingale(Strategy):
             
     def newCandle(self):  
         super().newCandle()
-        super().DEBUG_PRINT("\033m" + str(self.stopLoss_Pips))
         self.executeStrategy()  
 
