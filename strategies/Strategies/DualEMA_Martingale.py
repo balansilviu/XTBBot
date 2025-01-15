@@ -52,7 +52,7 @@ class DualEMA_Martingale(Strategy):
         self.initialLot = 0.5
         self.currentLot = self.initialLot
         self.maximumLot = 2
-        self.stopLoss_Pips = 10
+        self.stopLoss_Pips = 5
         
 
     def getHighestEma(self):
