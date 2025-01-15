@@ -24,7 +24,7 @@ class MainWindow:
     def Show(self):
         self.window = ctk.CTk()
         self.window.title("Trading Bot Interface")
-        self.window.geometry("600x750")
+        self.window.geometry("600x850")
         self.window.resizable(False, False)
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -42,8 +42,10 @@ class MainWindow:
         timeframe_var = self.CreateTimeframeSelection(strategy_frame, strategy_var, chart_var)
         self.strategy_table = self.CreateStrategyTable(strategy_frame)
 
-        ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: self.add_strategy_to_table(strategy_var.get(), chart_var.get(), timeframe_var.get(), self.strategy_table)).pack(pady=10, padx=10, fill="x")
+        self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var)
         self.CreateRemoveButton(strategy_frame)
+        self.CreateTest1Button(strategy_frame)
+        self.CreateTest2Button(strategy_frame)
 
     def CreateStrategySelection(self, strategy_frame):
         ctk.CTkLabel(strategy_frame, text="Select Strategy:").pack(anchor="w", padx=10)
@@ -103,8 +105,17 @@ class MainWindow:
         strategy_table.pack(pady=20, padx=10, fill="both", expand=True)
         return strategy_table
 
+    def CreateAddButton(self, strategy_frame, strategy_var, chart_var, timeframe_var):
+        ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: self.add_strategy_to_table(strategy_var.get(), chart_var.get(), timeframe_var.get(), self.strategy_table)).pack(pady=10, padx=10, fill="x")
+
     def CreateRemoveButton(self, strategy_frame):
         ctk.CTkButton(strategy_frame, text="Remove Selected Strategy", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
+
+    def CreateTest1Button(self, strategy_frame):
+        ctk.CTkButton(strategy_frame, text="BUY", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
+
+    def CreateTest2Button(self, strategy_frame):
+        ctk.CTkButton(strategy_frame, text="SELL", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
 
     def Close(self):
         self.window.destroy()

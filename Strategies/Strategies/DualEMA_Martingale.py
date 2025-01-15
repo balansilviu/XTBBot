@@ -122,7 +122,7 @@ class DualEMA_Martingale(Strategy):
 
                 elif self.lastPriceState == PriceState.WAIT_TWO_NEGATIVES:
                     if self.current_price < self.last_price:
-                        self.lastPriceState == PriceState.WAIT_CONFIRMATION
+                        self.priceState == PriceState.WAIT_CONFIRMATION
                         super().DEBUG_PRINT("\033mUNDER_LOW_EMA - WAIT CONFIRMATION")
                     else:
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES

@@ -38,6 +38,8 @@ class LoginWindowController:
         except Exception as e:
             self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
 
+    
+
     def SaveCredentials(self, username, password):
         with shelve.open('login_data') as login_data:
             login_data['username'] = username

@@ -30,6 +30,7 @@ class Strategy:
         self.currentCandle = None
         self.stop_event = threading.Event()
         self.openTradeCount = 0
+        self.appRetryConnectCount = 0
     
     def run_strategy(self):
         asyncio.run(self.__tick(1))
@@ -117,7 +118,14 @@ class Strategy:
             if self.currentCandle != self.lastCandle:
                 if self.lastCandle != None:
                     self.newCandle()
-                    self.RetryLogin()
+
+                    if self.appRetryConnectCount == 10:
+                        self.RetryLogin()
+                        self.appRetryConnectCount = 0
+                    else:
+                        self.appRetryConnectCount = self.appRetryConnectCount + 1
+
+                    
                     # self.DEBUG_PRINT("\033[33mNew candle.")
                 self.lastCandle = self.currentCandle
                 
