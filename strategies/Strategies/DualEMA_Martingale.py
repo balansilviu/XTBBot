@@ -52,7 +52,6 @@ class DualEMA_Martingale(Strategy):
         self.initialLot = 0.25
         self.currentLot = self.initialLot
         self.maximumLot = 2
-        self.stopLoss_Pips = 10
         
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
@@ -154,5 +153,6 @@ class DualEMA_Martingale(Strategy):
             
     def newCandle(self):  
         super().newCandle()
+        super().DEBUG_PRINT("\033m" + str(self.stopLoss_Pips))
         self.executeStrategy()  
 

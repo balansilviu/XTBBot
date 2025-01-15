@@ -24,7 +24,7 @@ class Timeframe(Enum):
 
 
 class Strategy:
-    def __init__(self, client, symbol, timeframe, volume=0.1):
+    def __init__(self, client, symbol, timeframe, stop_loss, volume=0.1):
         self.client = client
         self.symbol = symbol
         self.timeframe = timeframe
@@ -39,6 +39,7 @@ class Strategy:
         
         self.BACKTEST = False
         self.time = ""
+        self.stopLoss_Pips = stop_loss
     
     def run_strategy(self):
         asyncio.run(self.__tick(1))

@@ -62,7 +62,7 @@ class MainWindowController:
         self.main_window = MainWindow(self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy, self.Test1ButtonAction, self.Test2ButtonAction)
         self.main_window.Show()
 
-    def AddStrategyToTable(self, strategy, chart, timeframe, strategy_table):
+    def AddStrategyToTable(self, strategy, chart, timeframe, stop_loss, strategy_table):
         if strategy_table:
             strategy_table.insert("", "end", values=(strategy, chart, timeframe))
             
@@ -71,7 +71,7 @@ class MainWindowController:
             print(strategy)
             class_instance = globals()[strategy]
 
-            new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value)
+            new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value, float(stop_loss))
             self.appManager.strategyManager.AddStrategy(new_strategy)
             
             # Update table

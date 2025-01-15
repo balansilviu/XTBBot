@@ -41,10 +41,10 @@ class MainWindow:
 
         strategy_var = self.CreateStrategySelection(strategy_frame)
         chart_var, self.chart_entry = self.CreateInstrumentSelection(strategy_frame)
-        timeframe_var = self.CreateTimeframeSelection(strategy_frame, strategy_var, chart_var)
+        timeframe_var, stop_loss_var = self.CreateTimeframeSelection(strategy_frame, strategy_var, chart_var)
         self.strategy_table = self.CreateStrategyTable(strategy_frame)
 
-        self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var)
+        self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var, stop_loss_var)
         self.CreateRemoveButton(strategy_frame)
         self.CreateTest1Button(strategy_frame, chart_var, timeframe_var)
         self.CreateTest2Button(strategy_frame, chart_var, timeframe_var)
@@ -93,10 +93,23 @@ class MainWindow:
         self.chart_entry.bind("<FocusIn>", lambda event: chart_listbox.pack(pady=5, padx=10, fill="x"))
 
     def CreateTimeframeSelection(self, strategy_frame, strategy_var, chart_var):
-        ctk.CTkLabel(strategy_frame, text="Select Timeframe:").pack(anchor="w", padx=10)
+        # Frame pentru Timeframe și Stop Loss
+        properties_frame = ctk.CTkFrame(strategy_frame)
+        properties_frame.pack(pady=5, padx=10, fill="x")
+
+        # Select Timeframe
+        ctk.CTkLabel(properties_frame, text="Timeframe:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         timeframe_var = StringVar(value="M1")
-        ctk.CTkOptionMenu(strategy_frame, variable=timeframe_var, values=["M1", "M5", "M30", "H1", "H4", "D1", "W1", "MN"]).pack(pady=5, padx=10, fill="x")
-        return timeframe_var
+        timeframe_menu = ctk.CTkOptionMenu(properties_frame, variable=timeframe_var, values=["M1", "M5", "M30", "H1", "H4", "D1", "W1", "MN"])
+        timeframe_menu.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        # Stop Loss
+        ctk.CTkLabel(properties_frame, text="Stop Loss:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        stop_loss_var = StringVar(value="10.9")  # Valoarea implicită pentru Stop Loss
+        stop_loss_entry = ctk.CTkEntry(properties_frame, textvariable=stop_loss_var, width=100)
+        stop_loss_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+
+        return timeframe_var, stop_loss_var
 
     def CreateStrategyTable(self, strategy_frame):
         columns = ('Strategy', 'Instrument', 'Timeframe')
@@ -107,17 +120,17 @@ class MainWindow:
         strategy_table.pack(pady=20, padx=10, fill="both", expand=True)
         return strategy_table
 
-    def CreateAddButton(self, strategy_frame, strategy_var, chart_var, timeframe_var):
-        ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: self.add_strategy_to_table(strategy_var.get(), chart_var.get(), timeframe_var.get(), self.strategy_table)).pack(pady=10, padx=10, fill="x")
+    def CreateAddButton(self, strategy_frame, strategy_var, chart_var, timeframe_var, stop_loss_var):
+        ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: self.add_strategy_to_table(strategy_var.get(), chart_var.get(), timeframe_var.get(), stop_loss_var.get(), self.strategy_table)).pack(pady=10, padx=10, fill="x")
 
     def CreateRemoveButton(self, strategy_frame):
         ctk.CTkButton(strategy_frame, text="Remove Selected Strategy", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
 
     def CreateTest1Button(self, strategy_frame, chart_var, timeframe_var):
-        ctk.CTkButton(strategy_frame, text="BUY", command=lambda: self.test1_button_action(chart_var.get(), timeframe_var.get())).pack(pady=10, padx=10, fill="x")
+        ctk.CTkButton(strategy_frame, text="TEST 1", command=lambda: self.test1_button_action(chart_var.get(), timeframe_var.get())).pack(pady=10, padx=10, fill="x")
 
     def CreateTest2Button(self, strategy_frame, chart_var, timeframe_var):
-        ctk.CTkButton(strategy_frame, text="SELL", command=lambda: self.test2_button_action(chart_var.get(), timeframe_var.get())).pack(pady=10, padx=10, fill="x")
+        ctk.CTkButton(strategy_frame, text="TEST 2", command=lambda: self.test2_button_action(chart_var.get(), timeframe_var.get())).pack(pady=10, padx=10, fill="x")
 
     def Close(self):
         self.window.destroy()
