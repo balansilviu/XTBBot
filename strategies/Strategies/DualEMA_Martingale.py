@@ -36,8 +36,8 @@ class TransactionPermision(Enum):
 class DualEMA_Martingale(Strategy):
     def __init__(self, client, symbol, timeframe, volume=0.1):
         super().__init__(client, symbol, timeframe, volume)
-        self.ema20 = 20
-        self.ema60 = 60
+        self.ema20 = 4
+        self.ema60 = 8
         self.underLowestEma = False
         self.consecutiveNegativeCandles = 0
         self.inTrade = False
@@ -52,6 +52,7 @@ class DualEMA_Martingale(Strategy):
         self.initialLot = 0.25
         self.currentLot = self.initialLot
         self.maximumLot = 2
+        self.profit = 0
         
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
@@ -126,28 +127,52 @@ class DualEMA_Martingale(Strategy):
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
-            super().DEBUG_PRINT("\033[32m============== BUY " + str(self.currentLot) + " ===============")
+            super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
             self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
         elif self.transactionState == TransactionState.SELL:
-            if self.ThereIsTransactionOpen == False:
-                super().DEBUG_PRINT("\033[31m============= SELL " + str(self.currentLot) + " ===============")
+            if self.ThereIsTransactionOpen() == True:
+                super().DEBUG_PRINT("\033m============= SELL " + str(self.currentLot) + " ===============")
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
-                if self.wasLastTradeClosedByStopLoss():
+                if self.WasLastTradeProfitable() == False:
                     self.currentLot = self.currentLot * 2
                     if self.currentLot >= self.maximumLot:
                         self.currentLot = self.maximumLot 
                 else:
                     self.currentLot = self.initialLot
+
+                self.profit = self.profit + self.GetProfitOfLastTrade()
+
+                if self.profit > 0: 
+                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                else:
+                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+
+
             else:
                 pass
         elif self.transactionState == TransactionState.TRADE_CLOSED:
-            if self.ThereIsTransactionOpen == False:
-                super().DEBUG_PRINT("\033[31m============= STOP LOSS " + str(self.currentLot) + " ===============")
-            else:
-                pass
+            if self.ThereIsTransactionOpen() == True:
+                self.transactionState = TransactionState.TRADE_OPEN
+
+        elif self.transactionState == TransactionState.TRADE_OPEN:
+            if self.ThereIsTransactionOpen() == False:
+                self.transactionState = TransactionState.TRADE_CLOSED
+                super().DEBUG_PRINT("\033m============= STOP LOSS " + str(self.currentLot) + " ===============")
+
+                self.profit = self.profit + self.GetProfitOfLastTrade()
+
+                self.currentLot = self.currentLot * 2
+                if self.currentLot >= self.maximumLot:
+                    self.currentLot = self.maximumLot
+                
+                if self.profit > 0: 
+                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                else:
+                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+        
         else:
             pass
             

@@ -452,7 +452,6 @@ class Client(BaseClient):
         conversion_mode = {MODES.BUY.value: 'ask', MODES.SELL.value: 'bid'}
         price = self.get_symbol(symbol)[conversion_mode[mode]]
         if mode == MODES.BUY.value:
-            print(price-stop_loss)
             response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price-stop_loss),5), take_profit=take_profit, price=price)
         else:
             response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price+stop_loss),5), take_profit=take_profit, price=price)

@@ -6,6 +6,11 @@ from enum import Enum
 from strategies import Indicators
 from datetime import datetime, timezone, timedelta
 
+
+PIP_Multiplier = {
+    "EURUSD":0.0001
+}
+
 class Timeframe(Enum):
     M1 = 1
     M5 = 5
@@ -54,15 +59,22 @@ class DualEMA_Martingale_Tester(Strategy):
         self.initialLot = 0.5
         self.currentLot = self.initialLot
         self.maximumLot = 2
-        self.stopLoss_Pips = 10
+        self.stopLoss_Pips = 2.5
+        self.low = 0
         
         self.iteration = 0
         self.current_price_arr = []
         self.last_price_arr = []
         self.ema20_arr = []
         self.ema60_arr = []
-        
+        self.low_arr = []
         self.time_arr = []
+        self.profit = 0
+        self.spread = 0.9
+        self.open_price = 0
+        self.pip_value = 4.86
+        self.last_profit = 0
+        self.trasactionOpen = False
         
 
     def getHighestEma(self):
@@ -94,7 +106,7 @@ class DualEMA_Martingale_Tester(Strategy):
         else:
             self.lowestEma = self.ema60_arr[iteration]
             self.highestEma = self.ema20_arr[iteration]
-        
+        self.low = self.low_arr[iteration]
         
         if self.current_price > self.highestEma:
             self.priceState = PriceState.OVER_HIGH_EMA
@@ -139,55 +151,98 @@ class DualEMA_Martingale_Tester(Strategy):
                     pass
         else:
             pass
-        super().DEBUG_PRINT("\033m" + str(self.priceState))
+        # super().DEBUG_PRINT("\033m" + str(self.priceState))
         self.lastPriceState = self.priceState
 
     def dispatchTransactionStateMachine(self):
+
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
-            super().DEBUG_PRINT("\033[32m============== BUY " + str(self.currentLot) + " ===============")
+            super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
+            self.trasactionOpen = True
+            self.open_price = self.current_price
             self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
         elif self.transactionState == TransactionState.SELL:
-            if self.ThereIsTransactionOpen == False:
-                super().DEBUG_PRINT("\033[31m============= SELL " + str(self.currentLot) + " ===============")
+            if self.inTrade == True:
+                super().DEBUG_PRINT("\033m============= SELL " + str(self.currentLot) + " ===============")
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
-                if self.wasLastTradeClosedByStopLoss():
+                
+                self.profit = self.profit + (((self.current_price - self.open_price)/PIP_Multiplier[self.symbol] - self.spread) * self.pip_value)  * (self.currentLot / self.initialLot)
+                if self.profit > 0: 
+                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
+                else:
+                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
+
+                if self.profit < self.last_profit:
                     self.currentLot = self.currentLot * 2
                     if self.currentLot >= self.maximumLot:
                         self.currentLot = self.maximumLot 
                 else:
                     self.currentLot = self.initialLot
+
+                self.last_profit = self.profit
+                    
             else:
                 pass
+           
         elif self.transactionState == TransactionState.TRADE_CLOSED:
-            if self.ThereIsTransactionOpen == False:
-                super().DEBUG_PRINT("\033[31m============= STOP LOSS " + str(self.currentLot) + " ===============")
-            else:
-                pass
+            pass
+        elif self.transactionState == TransactionState.TRADE_OPEN:
+            self.CheckForStopLoss()
+            if self.wasLastTradeClosedByStopLoss():
+                self.transactionState = TransactionState.TRADE_CLOSED
+                super().DEBUG_PRINT("\033m============= STOP LOSS " + str(self.currentLot) + " ===============")
+                
+                self.currentLot = self.currentLot * 2
+                if self.currentLot >= self.maximumLot:
+                    self.currentLot = self.maximumLot 
+                
+                self.profit = self.profit - ((self.stopLoss_Pips - self.spread) * self.pip_value) * (self.currentLot / self.initialLot)
+                if self.profit > 0: 
+                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                else:
+                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+
+                
+
         else:
             pass
 
+    def wasLastTradeClosedByStopLoss(self):
+        return self.inTrade == False
+
+    def CheckForStopLoss(self):
+        if self.low <= self.open_price - (self.stopLoss_Pips - self.spread) * PIP_Multiplier[self.symbol]:
+            self.inTrade = False
+
+    def openTrade_stop_loss(self, volume=0.1, stop_loss=0):
+        self.inTrade = True
+
+    def closeTrade(self):
+        pass
+
     def Test(self):
 
-        self.BACKTEST = True
+        # self.BACKTEST = True
 
-        # backtest_period = 100
+        # backtest_period = 6000
 
-        # self.current_price_arr = self.CURRENT_CLOSE_LAST_N_VALUES(backtest_period+1)
-        # self.last_price_arr = self.LAST_CLOSE_LAST_N_VALUES(backtest_period+1)
-        # self.ema20_arr = self.EMA_LAST_N_VALUES(backtest_period+1, self.ema20)
-        # self.ema60_arr = self.EMA_LAST_N_VALUES(backtest_period+1, self.ema60)
-        # self.time_arr = self.CURRENT_TIME_N_VALUES(backtest_period)
+        # self.current_price_arr = super().TEST_CURRENT_CLOSE_LAST_N_VALUES(backtest_period+1)
+        # self.last_price_arr = super().TEST_LAST_CLOSE_LAST_N_VALUES(backtest_period+1)
+        # self.ema20_arr = super().TEST_EMA_LAST_N_VALUES(backtest_period+1, self.ema20)
+        # self.ema60_arr = super().TEST_EMA_LAST_N_VALUES(backtest_period+1, self.ema60)
+        # self.time_arr = super().TEST_CURRENT_TIME_N_VALUES(backtest_period)
+        # self.low_arr = super().TEST_CURRENT_LOW_LAST_N_VALUES(backtest_period + 1)
 
         # for i in range(1, backtest_period):
         #     self.time = self.time_arr[i]
         #     self.executeStrategy(i)
         #     pass
 
-        super().DEBUG_PRINT(self.ThereIsTransactionOpen())
+        print(self.WasLastTradeProfitable())
 
     def newCandle(self):  
         pass

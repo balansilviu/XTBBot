@@ -62,6 +62,16 @@ class Strategy:
     def getLastClosedTradeDetails(self):
         return self.client.get_last_closed_trade()
 
+    def WasLastTradeProfitable(self):
+        ret = False
+        if self.getLastClosedTradeDetails()["profit"] > 0:
+            ret = True
+        return ret
+    
+    def GetProfitOfLastTrade(self):
+        ret = False
+        return self.getLastClosedTradeDetails()["profit"]
+
     def wasLastTradeClosedByStopLoss(self):
         ret = False
         if self.getLastClosedTradeDetails()["comment"] == "[S/L]":
@@ -110,7 +120,7 @@ class Strategy:
         self.client.open_trade(MODES.BUY.value, self.symbol, volume, stop_loss)
 
     def openTrade_stop_loss(self, volume=0.1, stop_loss=0):
-        self.DEBUG_PRINT(stop_loss * PIP_Multiplier[self.symbol])
+        # self.DEBUG_PRINT(stop_loss * PIP_Multiplier[self.symbol])
         self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, stop_loss * PIP_Multiplier[self.symbol])
 
     def closeTrade(self):
@@ -193,9 +203,15 @@ class Strategy:
         arr = self.extractLabelValues(candle_history, "close")
         arr.pop()
         return arr
+    
+
+    def TEST_CURRENT_LOW_LAST_N_VALUES(self, length):
+        candle_history = self.getNLastCandlesDetails(self.timeframe, length)
+        return self.extractLabelValues(candle_history, "low")
+
 
     def TEST_EMA_LAST_N_VALUES(self, length, ema_period):
-        close_array = self.CURRENT_CLOSE_LAST_N_VALUES(length + 3*ema_period)
+        close_array = self.TEST_CURRENT_CLOSE_LAST_N_VALUES(length + 3*ema_period)
         arr = []
         for i in range(length):
             close_array_i = close_array[i+1:3*ema_period+i+1]
