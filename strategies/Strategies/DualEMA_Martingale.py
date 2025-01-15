@@ -36,8 +36,8 @@ class TransactionPermision(Enum):
 class DualEMA_Martingale(Strategy):
     def __init__(self, client, symbol, timeframe, volume=0.1):
         super().__init__(client, symbol, timeframe, volume)
-        self.ema20 = 4
-        self.ema60 = 8
+        self.ema20 = 20
+        self.ema60 = 60
         self.underLowestEma = False
         self.consecutiveNegativeCandles = 0
         self.inTrade = False
@@ -146,9 +146,9 @@ class DualEMA_Martingale(Strategy):
                 self.profit = self.profit + self.GetProfitOfLastTrade()
 
                 if self.profit > 0: 
-                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
                 else:
-                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
 
 
             else:
@@ -169,9 +169,9 @@ class DualEMA_Martingale(Strategy):
                     self.currentLot = self.maximumLot
                 
                 if self.profit > 0: 
-                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
                 else:
-                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)) + "\033m = > New lot size = " + str(self.currentLot))
+                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
         
         else:
             pass

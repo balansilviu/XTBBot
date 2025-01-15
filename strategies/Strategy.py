@@ -64,7 +64,7 @@ class Strategy:
 
     def WasLastTradeProfitable(self):
         ret = False
-        if self.getLastClosedTradeDetails()["profit"] > 0:
+        if self.getLastClosedTradeDetails()["profit"] >= 0:
             ret = True
         return ret
     
