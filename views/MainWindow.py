@@ -13,11 +13,13 @@ for module in __all__:
     __import__(f"strategies.Strategies.{module}")
 
 class MainWindow:
-    def __init__(self, on_close, all_symbols, add_strategy_to_table, remove_selected_strategy):
+    def __init__(self, on_close, all_symbols, add_strategy_to_table, remove_selected_strategy, test1_button_action, test2_button_action):
         self.on_close = on_close
         self.all_symbols = all_symbols
         self.add_strategy_to_table = add_strategy_to_table
         self.remove_selected_strategy = remove_selected_strategy
+        self.test1_button_action = test1_button_action
+        self.test2_button_action = test2_button_action
         self.chart_entry = None
         self.strategy_table = None
 
@@ -44,8 +46,8 @@ class MainWindow:
 
         self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var)
         self.CreateRemoveButton(strategy_frame)
-        self.CreateTest1Button(strategy_frame)
-        self.CreateTest2Button(strategy_frame)
+        self.CreateTest1Button(strategy_frame, chart_var, timeframe_var)
+        self.CreateTest2Button(strategy_frame, chart_var, timeframe_var)
 
     def CreateStrategySelection(self, strategy_frame):
         ctk.CTkLabel(strategy_frame, text="Select Strategy:").pack(anchor="w", padx=10)
@@ -111,11 +113,11 @@ class MainWindow:
     def CreateRemoveButton(self, strategy_frame):
         ctk.CTkButton(strategy_frame, text="Remove Selected Strategy", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
 
-    def CreateTest1Button(self, strategy_frame):
-        ctk.CTkButton(strategy_frame, text="BUY", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
+    def CreateTest1Button(self, strategy_frame, chart_var, timeframe_var):
+        ctk.CTkButton(strategy_frame, text="BUY", command=lambda: self.test1_button_action(chart_var.get(), timeframe_var.get())).pack(pady=10, padx=10, fill="x")
 
-    def CreateTest2Button(self, strategy_frame):
-        ctk.CTkButton(strategy_frame, text="SELL", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")
+    def CreateTest2Button(self, strategy_frame, chart_var, timeframe_var):
+        ctk.CTkButton(strategy_frame, text="SELL", command=lambda: self.test2_button_action(chart_var.get(), timeframe_var.get())).pack(pady=10, padx=10, fill="x")
 
     def Close(self):
         self.window.destroy()

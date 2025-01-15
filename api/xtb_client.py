@@ -270,12 +270,22 @@ class BaseClient(object):
         data = _get_data("getTrades", openedOnly=opened_only)
         self.LOGGER.info("Get trades command executed")
         return self._send_command_with_check(data)
+    
+    def get_trade_status(self, opened_only=True):
+        """getTrades command"""
+        data = _get_data("getTradeStatus", openedOnly=opened_only)
+        self.LOGGER.info("Get trades command executed")
+        return self._send_command_with_check(data)
 
     def get_trades_history(self, start, end):
         """getTradesHistory command"""
         data = _get_data("getTradesHistory", end=end, start=start)
         self.LOGGER.info(f"Get trades history from {start} to {end} command executed")
         return self._send_command_with_check(data)
+    
+    def get_last_closed_trade(self):
+        """getTradesHistory command"""
+        return self.get_trades_history(0, 0)[0]
 
     def get_trading_hours(self, trade_position_list):
         """getTradingHours command"""
@@ -420,6 +430,32 @@ class Client(BaseClient):
         conversion_mode = {MODES.BUY.value: 'ask', MODES.SELL.value: 'bid'}
         price = self.get_symbol(symbol)[conversion_mode[mode]]
         response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=stop_loss, take_profit=take_profit, price=price)
+        self.update_trades()
+        status = self.trade_transaction_status(response['order'])['requestStatus']
+        self.LOGGER.debug(f"open_trade completed with status of {status}")
+        if status != 3:
+            raise TransactionRejected(status)
+        return response
+    
+    def open_trade_stop_loss(self, mode, symbol, volume, stop_loss=0, take_profit=0):
+        """open trade transaction"""
+        if mode in [MODES.BUY.value, MODES.SELL.value]:
+            mode = [x for x in MODES if x.value == mode][0]
+        elif mode in ['buy', 'sell']:
+            modes = {'buy': MODES.BUY, 'sell': MODES.SELL}
+            mode = modes[mode]
+        else:
+            raise ValueError("mode can be buy or sell")
+        mode_name = mode.name
+        mode = mode.value
+        self.LOGGER.debug(f"Opening trade of {symbol} of {volume} with {mode_name}")
+        conversion_mode = {MODES.BUY.value: 'ask', MODES.SELL.value: 'bid'}
+        price = self.get_symbol(symbol)[conversion_mode[mode]]
+        if mode == MODES.BUY.value:
+            print(price-stop_loss)
+            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=(price-stop_loss), take_profit=take_profit, price=price)
+        else:
+            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=(price+stop_loss), take_profit=take_profit, price=price)
         self.update_trades()
         status = self.trade_transaction_status(response['order'])['requestStatus']
         self.LOGGER.debug(f"open_trade completed with status of {status}")

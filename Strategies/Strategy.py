@@ -6,6 +6,10 @@ from enum import Enum
 from XTBApi.api import TRANS_TYPES
 from XTBApi.api import MODES
 
+PIP_Multiplier = {
+    "EURUSD":0.0001
+}
+
 class Timeframe(Enum):
     M1 = 1
     M5 = 5
@@ -50,6 +54,15 @@ class Strategy:
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, 1)
         return candle_history
     
+    def getLastClosedTradeDetails(self):
+        return self.client.get_last_closed_trade()
+
+    def wasLastTradeClosedByStopLoss(self):
+        ret = False
+        if self.getLastClosedTradeDetails()["comment"] == "[S/L]":
+            ret = True
+        return ret
+
     def getNLastCandlesDetails(self, timeframe_in_minutes, number_of_candles):
         candle_history = []
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, number_of_candles)
@@ -87,9 +100,12 @@ class Strategy:
     def getLastCandleClose(self):
         return self.getNLastCandlesDetails(self.timeframe,2)[0]['close']
     
-    def openTrade(self):
-        self.client.open_trade(MODES.BUY.value, self.symbol, self.volume)
-        
+    def openTrade(self, volume=0.1, stop_loss=0):
+        self.client.open_trade(MODES.BUY.value, self.symbol, volume, stop_loss)
+
+    def openTrade_stop_loss(self, volume=0.1, stop_loss=0):
+        self.DEBUG_PRINT(stop_loss * PIP_Multiplier[self.symbol])
+        self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, stop_loss * PIP_Multiplier[self.symbol])
 
     def closeTrade(self):
         try:

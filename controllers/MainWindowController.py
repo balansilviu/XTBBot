@@ -58,7 +58,7 @@ class MainWindowController:
         self.appManager = AppManager()
 
     def CreateMainWindow(self):
-        self.main_window = MainWindow(self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy)
+        self.main_window = MainWindow(self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy, self.Test1ButtonAction, self.Test2ButtonAction)
         self.main_window.Show()
 
     def AddStrategyToTable(self, strategy, chart, timeframe, strategy_table):
@@ -91,6 +91,18 @@ class MainWindowController:
                 first_item = strategy_table.get_children()[0]
                 strategy_table.selection_set(first_item)
                 strategy_table.focus(first_item)
+
+    def Test1ButtonAction(self, chart, timeframe):
+        strategy = Strategy(self.client, chart, timeframe, volume=0.1)
+        strategy.openTrade_stop_loss(0.5, 2)
+
+    def Test2ButtonAction(self, chart, timeframe):
+        # print(self.client.get_last_closed_trade())
+        strategy = Strategy(self.client, chart, timeframe, volume=0.1)
+
+        print(strategy.wasLastTradeClosedByStopLoss())
+        
+        pass
 
     def OnClose(self):
         self.appManager.strategyManager.StopAllStrategies()
