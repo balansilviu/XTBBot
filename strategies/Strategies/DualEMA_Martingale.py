@@ -36,25 +36,24 @@ class TransactionPermision(Enum):
 class DualEMA_Martingale(Strategy):
     def __init__(self, client, symbol, timeframe, volume=0.1):
         super().__init__(client, symbol, timeframe, volume)
-        self.ema20 = 9
-        self.ema60 = 18
+        self.ema20 = 20
+        self.ema60 = 60
         self.underLowestEma = False
         self.consecutiveNegativeCandles = 0
         self.inTrade = False
         self.priceState = PriceState.NOT_CONFIG
         self.lastPriceState = PriceState.NOT_CONFIG
         self.transactionState = TransactionState.TRADE_CLOSED
-        self.transactionPermision = TransactionPermision.ALLOWED
+        self.transactionPermision = TransactionPermision.NOT_ALLOWED
         self.current_price = 0
         self.last_price = 0
         self.lowestEma = 0
         self.highestEma = 0
-        self.initialLot = 0.5
+        self.initialLot = 0.25
         self.currentLot = self.initialLot
         self.maximumLot = 2
-        self.stopLoss_Pips = 5
+        self.stopLoss_Pips = 10
         
-
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
         ema20_value = self.calculateEMA(self.ema20, self.timeframe)
@@ -73,7 +72,6 @@ class DualEMA_Martingale(Strategy):
         lowest_ema = min(ema20_value, ema60_value)
         return lowest_ema
     
-
     def pricesUpdates(self):
         self.current_price = super().getCurrentCandleClose()
         self.last_price = super().getLastCandleClose()
@@ -88,7 +86,6 @@ class DualEMA_Martingale(Strategy):
         else:
             self.priceState = PriceState.BETWEEN_EMAS
 
-    
     def executeStrategy(self):
         self.pricesUpdates()
         self.dispatchPriceStateMachine()
@@ -96,82 +93,65 @@ class DualEMA_Martingale(Strategy):
 
     def dispatchPriceStateMachine(self):
         if self.priceState == PriceState.OVER_HIGH_EMA:
-            super().DEBUG_PRINT("\033mOVER_HIGH_EMA")
             self.transactionPermision = TransactionPermision.ALLOWED
-
             if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.UNDER_LOW_EMA:
                 if self.transactionState == TransactionState.TRADE_OPEN:
-                    self.transactionState = TransactionState.SELL
-                
-
+                    self.transactionState = TransactionState.SELL   
         elif self.priceState == PriceState.UNDER_LOW_EMA:
-            
             if self.transactionPermision == TransactionPermision.NOT_ALLOWED:
-                super().DEBUG_PRINT("\033mUNDER_LOW_EMA - Transaction not allowed")
+                pass
             else:
                 if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.OVER_HIGH_EMA:
                     self.priceState = PriceState.WAIT_CONFIRMATION
-                    super().DEBUG_PRINT("\033mUNDER_LOW_EMA - CROSS - WAIT CONFIRMATION")
-                
                 elif self.lastPriceState == PriceState.WAIT_CONFIRMATION:
-                    if self.current_price < self.last_price:
-                        super().DEBUG_PRINT("\033mUNDER_LOW_EMA - BUY")
+                    if self.current_price <= self.last_price:
                         if self.transactionState == TransactionState.TRADE_CLOSED:
                             self.transactionState = TransactionState.BUY
                             self.transactionPermision = TransactionPermision.NOT_ALLOWED
                             self.priceState = PriceState.UNDER_LOW_EMA
                     else:
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES
-                        super().DEBUG_PRINT("\033mUNDER_LOW_EMA - WAIT TWO NEGATIVES")
 
                 elif self.lastPriceState == PriceState.WAIT_TWO_NEGATIVES:
-                    if self.current_price < self.last_price:
+                    if self.current_price <= self.last_price:
                         self.priceState = PriceState.WAIT_CONFIRMATION
-                        super().DEBUG_PRINT("\033mUNDER_LOW_EMA - WAIT CONFIRMATION")
                     else:
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES
-                        super().DEBUG_PRINT("\033mUNDER_LOW_EMA - WAIT TWO NEGATIVES")
-
                 else:
-                    super().DEBUG_PRINT("\033mSTATE = " + str(self.priceState))
-                    super().DEBUG_PRINT("\033mUNDER_LOW_EMA")
-
+                    pass
         else:
-            super().DEBUG_PRINT("\033mBETWEEN_EMAS")
-
+            pass
         self.lastPriceState = self.priceState
-
+        super().DEBUG_PRINT("\033m" + str(self.priceState))
 
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
-            super().DEBUG_PRINT("\033[32m==============BUY===============")
+            super().DEBUG_PRINT("\033[32m============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
             self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
         elif self.transactionState == TransactionState.SELL:
-            super().DEBUG_PRINT("\033[31m==============SELL==============")
-            self.transactionState = TransactionState.TRADE_CLOSED
-            self.closeTrade()
-
-            if self.wasLastTradeClosedByStopLoss():
-                self.currentLot = self.currentLot * 2
-                if self.currentLot >= self.maximumLot:
-                    self.currentLot = self.maximumLot 
+            if self.ThereIsTransactionOpen == False:
+                super().DEBUG_PRINT("\033[31m============= SELL " + str(self.currentLot) + " ===============")
+                self.transactionState = TransactionState.TRADE_CLOSED
+                self.closeTrade()
+                if self.wasLastTradeClosedByStopLoss():
+                    self.currentLot = self.currentLot * 2
+                    if self.currentLot >= self.maximumLot:
+                        self.currentLot = self.maximumLot 
+                else:
+                    self.currentLot = self.initialLot
             else:
-                self.currentLot = self.initialLot
-
-        
+                pass
+        elif self.transactionState == TransactionState.TRADE_CLOSED:
+            if self.ThereIsTransactionOpen == False:
+                super().DEBUG_PRINT("\033[31m============= STOP LOSS " + str(self.currentLot) + " ===============")
+            else:
+                pass
         else:
             pass
-
-    def printStates(self):
-        
-        # super().DEBUG_PRINT("\033[37mLowest EMA: " + str(round(self.lowestEma, 4)) + ", highest EMA: " + str(round(self.highestEma, 4)) + ", current close: " + str(self.current_price))
-        super().DEBUG_PRINT("\033mLowest EMA: " + str(round(self.lowestEma, 4)) + ", highest EMA: " + str(round(self.highestEma, 4)) + ", Current close: " + str(self.current_price) + ", Last close: " + str(self.last_price))
-        
-
-
+            
     def newCandle(self):  
         super().newCandle()
         self.executeStrategy()  

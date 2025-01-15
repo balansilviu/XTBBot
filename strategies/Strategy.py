@@ -5,6 +5,7 @@ from strategies import Indicators
 from enum import Enum
 from XTBApi.api import TRANS_TYPES
 from XTBApi.api import MODES
+from datetime import datetime, timezone, timedelta
 
 PIP_Multiplier = {
     "EURUSD":0.0001
@@ -35,6 +36,9 @@ class Strategy:
         self.stop_event = threading.Event()
         self.openTradeCount = 0
         self.appRetryConnectCount = 0
+        
+        self.BACKTEST = False
+        self.time = ""
     
     def run_strategy(self):
         asyncio.run(self.__tick(1))
@@ -81,12 +85,13 @@ class Strategy:
         return Indicators.RSI(self.extractLabelValues(candle_history, "close"), period)
 
     def tick(self):
-        #self.DEBUG_PRINT("Close price: " + str(self.getCurrentCandleClose()))
         pass
 
     def newCandle(self):
-        # self.DEBUG_PRINT("\033[33mNew candle")
         pass
+
+    def ThereIsTransactionOpen(self):
+        return (self.client.get_trades()!=[])
 
     def extractLabelValues(self, data_list, label):
         return [d[label] for d in data_list if label in d]
@@ -148,10 +153,51 @@ class Strategy:
             await asyncio.sleep(1)  # Așteaptă 1 secundă
         self.DEBUG_PRINT("\033[33mThread stopped.")
 
+
+##########################################################################################################################################
+# Functions below are used for backtest and DEBUG
+
     def DEBUG_PRINT(self, text):
-        # Obține timpul curent și scade un minut
-        current_time = datetime.datetime.now() - datetime.timedelta(minutes=0)
-        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        
+        if self.BACKTEST == False:
+            # Obține timpul curent și scade un minut
+            current_time = datetime.now() - timedelta(minutes=0)
+            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+            
+            reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
+            print(f"{formatted_time} DEBUG PRINT: {text}{reset_color}")
+        else:
+            self.TEST_DEBUG_PRINT(self.time, text)
+
+
+    def TEST_DEBUG_PRINT(self, time, text):
         reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
-        print(f"{formatted_time} DEBUG PRINT: {text}{reset_color}")
+        print(f"{time} DEBUG PRINT: {text}{reset_color}")
+
+    def TEST_CURRENT_TIME_N_VALUES(self, length):
+        candle_history = self.getNLastCandlesDetails(self.timeframe, length)
+        timestamps = self.extractLabelValues(candle_history, "timestamp")
+        gmt_plus_2 = timezone(timedelta(hours=2))
+        formatted_times = [
+            datetime.fromtimestamp(ts, gmt_plus_2).strftime('%Y-%m-%d %H:%M:%S')
+            for ts in timestamps
+        ]
+        return formatted_times
+    
+    def TEST_CURRENT_CLOSE_LAST_N_VALUES(self, length):
+        candle_history = self.getNLastCandlesDetails(self.timeframe, length)
+        return self.extractLabelValues(candle_history, "close")
+    
+    def TEST_LAST_CLOSE_LAST_N_VALUES(self, length):
+        candle_history = self.getNLastCandlesDetails(self.timeframe, length+1)
+        arr = self.extractLabelValues(candle_history, "close")
+        arr.pop()
+        return arr
+
+    def TEST_EMA_LAST_N_VALUES(self, length, ema_period):
+        close_array = self.CURRENT_CLOSE_LAST_N_VALUES(length + 3*ema_period)
+        arr = []
+        for i in range(length):
+            close_array_i = close_array[i+1:3*ema_period+i+1]
+            ema = Indicators.EMA(close_array_i, ema_period)
+            arr.append(round(float(ema), 5))
+        return arr

@@ -61,7 +61,7 @@ class DualEMA_Martingale_Tester(Strategy):
         self.last_price_arr = []
         self.ema20_arr = []
         self.ema60_arr = []
-        self.time = ""
+        
         self.time_arr = []
         
 
@@ -111,27 +111,22 @@ class DualEMA_Martingale_Tester(Strategy):
 
     def dispatchPriceStateMachine(self):
         if self.priceState == PriceState.OVER_HIGH_EMA:
-            self.DEBUG_PRINT("\033mOVER_HIGH_EMA")
             self.transactionPermision = TransactionPermision.ALLOWED
-
             if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.UNDER_LOW_EMA:
                 if self.transactionState == TransactionState.TRADE_OPEN:
-                    self.transactionState = TransactionState.SELL
-                
-
+                    self.transactionState = TransactionState.SELL   
         elif self.priceState == PriceState.UNDER_LOW_EMA:
-            
             if self.transactionPermision == TransactionPermision.NOT_ALLOWED:
                 pass
             else:
                 if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.OVER_HIGH_EMA:
                     self.priceState = PriceState.WAIT_CONFIRMATION
-                
                 elif self.lastPriceState == PriceState.WAIT_CONFIRMATION:
                     if self.current_price < self.last_price:
                         if self.transactionState == TransactionState.TRADE_CLOSED:
                             self.transactionState = TransactionState.BUY
                             self.transactionPermision = TransactionPermision.NOT_ALLOWED
+                            self.priceState = PriceState.UNDER_LOW_EMA
                     else:
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES
 
@@ -140,103 +135,59 @@ class DualEMA_Martingale_Tester(Strategy):
                         self.priceState = PriceState.WAIT_CONFIRMATION
                     else:
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES
-
                 else:
                     pass
-
         else:
             pass
-
+        super().DEBUG_PRINT("\033m" + str(self.priceState))
         self.lastPriceState = self.priceState
-        self.DEBUG_PRINT(self.priceState)
-
 
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
-            self.DEBUG_PRINT("\033[32m==============BUY===============")
+            super().DEBUG_PRINT("\033[32m============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
-            # self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
+            self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
         elif self.transactionState == TransactionState.SELL:
-            self.DEBUG_PRINT("\033[31m==============SELL==============")
-            self.transactionState = TransactionState.TRADE_CLOSED
-            # self.closeTrade()
-
-            if self.wasLastTradeClosedByStopLoss():
-                self.currentLot = self.currentLot * 2
-                if self.currentLot >= self.maximumLot:
-                    self.currentLot = self.maximumLot 
+            if self.ThereIsTransactionOpen == False:
+                super().DEBUG_PRINT("\033[31m============= SELL " + str(self.currentLot) + " ===============")
+                self.transactionState = TransactionState.TRADE_CLOSED
+                self.closeTrade()
+                if self.wasLastTradeClosedByStopLoss():
+                    self.currentLot = self.currentLot * 2
+                    if self.currentLot >= self.maximumLot:
+                        self.currentLot = self.maximumLot 
+                else:
+                    self.currentLot = self.initialLot
             else:
-                self.currentLot = self.initialLot
-
-        
+                pass
+        elif self.transactionState == TransactionState.TRADE_CLOSED:
+            if self.ThereIsTransactionOpen == False:
+                super().DEBUG_PRINT("\033[31m============= STOP LOSS " + str(self.currentLot) + " ===============")
+            else:
+                pass
         else:
             pass
 
-    def printStates(self):
-        
-        # self.DEBUG_PRINT("\033[37mLowest EMA: " + str(round(self.lowestEma, 4)) + ", highest EMA: " + str(round(self.highestEma, 4)) + ", current close: " + str(self.current_price))
-        self.DEBUG_PRINT("\033mLowest EMA: " + str(round(self.lowestEma, 4)) + ", highest EMA: " + str(round(self.highestEma, 4)) + ", Current close: " + str(self.current_price) + ", Last close: " + str(self.last_price))
-        
-    
-    def CURRENT_TIME_N_VALUES(self, length):
-        candle_history = self.getNLastCandlesDetails(self.timeframe, length)
-        timestamps = self.extractLabelValues(candle_history, "timestamp")
-
-        gmt_plus_2 = timezone(timedelta(hours=2))
-
-
-        formatted_times = [
-            datetime.fromtimestamp(ts, gmt_plus_2).strftime('%Y-%m-%d %H:%M:%S')
-            for ts in timestamps
-        ]
-
-        return formatted_times
-    
-    
-    def CURRENT_CLOSE_LAST_N_VALUES(self, length):
-        candle_history = self.getNLastCandlesDetails(self.timeframe, length)
-        return self.extractLabelValues(candle_history, "close")
-    
-    def LAST_CLOSE_LAST_N_VALUES(self, length):
-        candle_history = self.getNLastCandlesDetails(self.timeframe, length+1)
-        arr = self.extractLabelValues(candle_history, "close")
-        arr.pop()
-        return arr
-
-    def EMA_LAST_N_VALUES(self, length, ema_period):
-        close_array = self.CURRENT_CLOSE_LAST_N_VALUES(length + 3*ema_period)
-        
-        arr = []
-
-        for i in range(length):
-            close_array_i = close_array[i+1:3*ema_period+i+1]
-            ema = Indicators.EMA(close_array_i, ema_period)
-            arr.append(round(float(ema), 5))
-
-        return arr
-
     def Test(self):
 
-        backtest_period = 1000
+        self.BACKTEST = True
 
-        self.current_price_arr = self.CURRENT_CLOSE_LAST_N_VALUES(backtest_period+1)
-        self.last_price_arr = self.LAST_CLOSE_LAST_N_VALUES(backtest_period+1)
-        self.ema20_arr = self.EMA_LAST_N_VALUES(backtest_period+1, self.ema20)
-        self.ema60_arr = self.EMA_LAST_N_VALUES(backtest_period+1, self.ema60)
-        self.time_arr = self.CURRENT_TIME_N_VALUES(backtest_period)
+        # backtest_period = 100
 
-        print(self.time_arr)
+        # self.current_price_arr = self.CURRENT_CLOSE_LAST_N_VALUES(backtest_period+1)
+        # self.last_price_arr = self.LAST_CLOSE_LAST_N_VALUES(backtest_period+1)
+        # self.ema20_arr = self.EMA_LAST_N_VALUES(backtest_period+1, self.ema20)
+        # self.ema60_arr = self.EMA_LAST_N_VALUES(backtest_period+1, self.ema60)
+        # self.time_arr = self.CURRENT_TIME_N_VALUES(backtest_period)
 
-        for i in range(1, backtest_period):
-            self.time = self.time_arr[i]
-            self.executeStrategy(i)
-            pass
+        # for i in range(1, backtest_period):
+        #     self.time = self.time_arr[i]
+        #     self.executeStrategy(i)
+        #     pass
 
-    def DEBUG_PRINT(self, text):
-        reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
-        print(f"{self.time} DEBUG PRINT: {text}{reset_color}")
+        super().DEBUG_PRINT(self.ThereIsTransactionOpen())
 
     def newCandle(self):  
         pass
