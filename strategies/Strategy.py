@@ -23,6 +23,17 @@ class Timeframe(Enum):
     MN = 43200
 
 
+class Timeframe_Seconds(Enum):
+    M1 = 60
+    M5 = 300
+    M15 = 900
+    M30 = 1800
+    H1 = 3600
+    H4 = 14400
+    D1 = 86400
+    W1 = 604800
+    MN = 2592000
+
 class Strategy:
     def __init__(self, client, symbol, timeframe, stop_loss, volume=0.1):
         self.client = client
@@ -31,11 +42,14 @@ class Strategy:
         self.volume = volume
         self.thread = None
         self.process = None
-        self.lastCandle = 0
-        self.currentCandle = 0
+        self.lastCandle = None
+        self.currentCandle = None
         self.stop_event = threading.Event()
         self.openTradeCount = 0
         self.appRetryConnectCount = 0
+        self.current_price = 0
+        self.last_price = 0
+        self.timestamp = 0
         
         self.BACKTEST = False
         self.time = ""
@@ -85,7 +99,8 @@ class Strategy:
     
     def calculateEMA(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, 3 * period)
-        return Indicators.EMA(self.extractLabelValues(candle_history, "close"), period)
+        close_extracted = self.extractLabelValues(candle_history, "close")
+        return Indicators.EMA(close_extracted, period)
     
     def calculateSMA(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
@@ -94,9 +109,6 @@ class Strategy:
     def calculateRSI(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
         return Indicators.RSI(self.extractLabelValues(candle_history, "close"), period)
-
-    def tick(self):
-        pass
 
     def newCandle(self):
         pass
@@ -114,7 +126,7 @@ class Strategy:
         return self.getLastCandleDetails(self.timeframe)[0]['open']
     
     def getLastTimestamp(self):
-        candle_history = self.getNLastCandlesDetails(self.timeframe, 1)
+        candle_history = self.getNLastCandlesDetails(1, 1)
         timestamp = self.extractLabelValues(candle_history, "timestamp")
         return timestamp[0]
 
@@ -141,32 +153,34 @@ class Strategy:
 
     def RetryLogin(self):
         try:
-            self.client.retry_login()
+            if self.appRetryConnectCount == 10:
+                self.client.retry_login()
+                self.appRetryConnectCount = 0
+            else:
+                self.appRetryConnectCount = self.appRetryConnectCount + 1
+
         except Exception as e:
             self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
         pass
 
+    def tick(self):
+        timestamp = self.client.get_server_time()['time']//1000
+
+        if timestamp % (self.timeframe * 60) == 0:
+            self.timestamp = timestamp
+            self.newCandle()
+        
+    ###### DO NOT CHANGE ######
     async def __tick(self, timeframe_in_minutes):
         self.DEBUG_PRINT("\033[33mThread started.")
+        timestamp = 0
+        last_timestamp = 0
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
-            self.tick()
-            self.currentCandle = self.getLastTimestamp()
-            
-            if self.currentCandle != self.lastCandle:
-                if self.lastCandle != None:
-                    
-                    self.newCandle()
-                    if self.appRetryConnectCount == 10:
-                        self.RetryLogin()
-                        self.appRetryConnectCount = 0
-                    else:
-                        self.appRetryConnectCount = self.appRetryConnectCount + 1
+            timestamp = self.client.get_server_time()['time']//1000
 
-                    
-                    # self.DEBUG_PRINT("\033[33mNew candle.")
-                self.lastCandle = self.currentCandle
-                
-            await asyncio.sleep(1)  # Așteaptă 1 secundă
+            if (timestamp != last_timestamp):
+                self.tick()
+                last_timestamp = timestamp
         self.DEBUG_PRINT("\033[33mThread stopped.")
 
 
@@ -176,9 +190,14 @@ class Strategy:
     def DEBUG_PRINT(self, text):
         if self.BACKTEST == False:
             # Obține timpul curent și scade un minut
-            current_time = datetime.now() - timedelta(minutes=0)
-            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
             
+            try:
+                timestamp = datetime.fromtimestamp(self.timestamp) - timedelta(minutes=self.timeframe)
+            except Exception as e:
+                timestamp = datetime.now()
+
+            formatted_time = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
             reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
             print(f"{formatted_time} DEBUG PRINT: {text}{reset_color}")
         else:
@@ -198,6 +217,11 @@ class Strategy:
             for ts in timestamps
         ]
         return formatted_times
+    
+    def TEST_CURRENT_TIMESTAMP_N_VALUES(self, length):
+        candle_history = self.getNLastCandlesDetails(self.timeframe, length)
+        timestamps = self.extractLabelValues(candle_history, "timestamp")
+        return timestamps
     
     def TEST_CURRENT_CLOSE_LAST_N_VALUES(self, length):
         candle_history = self.getNLastCandlesDetails(self.timeframe, length)

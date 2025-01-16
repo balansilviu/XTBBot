@@ -15,6 +15,17 @@ class Timeframe(Enum):
     W1 = 10080
     MN = 43200
 
+class Timeframe_Seconds(Enum):
+    M1 = 60
+    M5 = 300
+    M15 = 900
+    M30 = 1800
+    H1 = 3600
+    H4 = 14400
+    D1 = 86400
+    W1 = 604800
+    MN = 2592000
+
 class PriceState(Enum):
     NOT_CONFIG = 0
     OVER_HIGH_EMA = 1
@@ -38,15 +49,12 @@ class DualEMA_Martingale(Strategy):
         super().__init__(client, symbol, timeframe, volume)
         self.ema20 = 20
         self.ema60 = 60
-        self.underLowestEma = False
-        self.consecutiveNegativeCandles = 0
         self.inTrade = False
         self.priceState = PriceState.NOT_CONFIG
         self.lastPriceState = PriceState.NOT_CONFIG
         self.transactionState = TransactionState.TRADE_CLOSED
         self.transactionPermision = TransactionPermision.NOT_ALLOWED
-        self.current_price = 0
-        self.last_price = 0
+    
         self.lowestEma = 0
         self.highestEma = 0
         self.initialLot = 0.25
@@ -175,8 +183,13 @@ class DualEMA_Martingale(Strategy):
         
         else:
             pass
-            
+
     def newCandle(self):  
         super().newCandle()
+
+        self.pricesUpdates()
+        # self.DEBUG_PRINT("Close = " + str(self.current_price) + ", last = " + str(self.last_price) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
+
         self.executeStrategy()  
+
 

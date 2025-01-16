@@ -99,7 +99,7 @@ class MainWindowController:
     def Test2ButtonAction(self, chart, timeframe):
         # print(self.client.get_last_closed_trade())
 
-        strategy = DualEMA_Martingale_Tester(self.client, chart, Timeframe[timeframe].value, volume=0.1)
+        strategy = DualEMA_Martingale_Tester(self.client, chart, Timeframe[timeframe].value, volume=0.5)
 
         strategy.Test()
         
