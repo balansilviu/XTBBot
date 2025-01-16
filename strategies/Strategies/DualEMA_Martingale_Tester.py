@@ -240,19 +240,19 @@ class DualEMA_Martingale_Tester(Strategy):
 
         self.BACKTEST = True
 
-        backtest_period = 5000
+        backtest_period = 1
 
-        self.current_price_arr = super().TEST_CURRENT_CLOSE_LAST_N_VALUES(backtest_period+1)
-        self.last_price_arr = super().TEST_LAST_CLOSE_LAST_N_VALUES(backtest_period+1)
-        self.ema20_arr = super().TEST_EMA_LAST_N_VALUES(backtest_period+1, self.ema20)
-        self.ema60_arr = super().TEST_EMA_LAST_N_VALUES(backtest_period+1, self.ema60)
-        self.time_arr = super().TEST_CURRENT_TIME_N_VALUES(backtest_period)
-        self.low_arr = super().TEST_CURRENT_LOW_LAST_N_VALUES(backtest_period + 1)
+        # self.current_price_arr = super().TEST_CURRENT_CLOSE_LAST_N_VALUES(backtest_period+1)
+        # self.last_price_arr = super().TEST_LAST_CLOSE_LAST_N_VALUES(backtest_period+1)
+        # self.ema20_arr = super().TEST_EMA_LAST_N_VALUES(backtest_period+1, self.ema20)
+        # self.ema60_arr = super().TEST_EMA_LAST_N_VALUES(backtest_period+1, self.ema60)
+        # self.time_arr = super().TEST_CURRENT_TIME_N_VALUES(backtest_period)
+        # self.low_arr = super().TEST_CURRENT_LOW_LAST_N_VALUES(backtest_period + 1)
         self.timestamp_arr = super().TEST_CURRENT_TIMESTAMP_N_VALUES(backtest_period)
 
-        for i in range(1, backtest_period):
-            self.executeStrategy(i)
-            pass
+        # for i in range(1, backtest_period):
+        #     self.executeStrategy(i)
+        #     pass
 
         # print(self.getLastTimestamp())
 

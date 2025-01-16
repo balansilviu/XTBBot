@@ -51,6 +51,7 @@ class Strategy:
         self.current_open = 0
         self.last_price = 0
         self.timestamp = 0
+        self.bid = 0
         
         self.BACKTEST = False
         self.time = ""
@@ -124,7 +125,7 @@ class Strategy:
         return self.getLastCandleDetails(self.timeframe)[0]['close']
     
     def getCurrentBidPrice(self):
-        return self.client.get_symbol(self.symbol)['bid']
+        return self.bid
 
     def getCurrentCandleOpen(self):
         return self.getLastCandleDetails(self.timeframe)[0]['open']
@@ -167,10 +168,13 @@ class Strategy:
             self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
         pass
 
-    def tick(self):
+    def tick(self):   
+
         timestamp = self.client.get_server_time()['time']//1000
         if timestamp % (self.timeframe * 60) == 0:
             self.timestamp = timestamp
+            quotations = self.client.get_tick_prices(self.symbol, 1, self.client.get_server_time()['time'])['quotations']
+            self.bid = quotations[0]['bid']
             if self.lastCandle != None:
                 while self.currentCandle == self.lastCandle:
                     time.sleep(1)
