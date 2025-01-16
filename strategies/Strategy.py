@@ -5,7 +5,8 @@ from strategies import Indicators
 from enum import Enum
 from XTBApi.api import TRANS_TYPES
 from XTBApi.api import MODES
-from datetime import datetime, time, timezone, timedelta
+from datetime import datetime, timezone, timedelta
+import time
 
 PIP_Multiplier = {
     "EURUSD":0.0001
@@ -42,8 +43,8 @@ class Strategy:
         self.volume = volume
         self.thread = None
         self.process = None
-        self.lastCandle = None
-        self.currentCandle = None
+        self.lastCandle = 0
+        self.currentCandle = 0
         self.stop_event = threading.Event()
         self.openTradeCount = 0
         self.appRetryConnectCount = 0
@@ -73,6 +74,7 @@ class Strategy:
     def getLastCandleDetails(self, timeframe_in_minutes):
         candle_history = []
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, 1)
+        print(candle_history)
         return candle_history
     
     def getNLastCandleDetails(self, timeframe_in_minutes, n):
@@ -178,12 +180,11 @@ class Strategy:
         timestamp = self.client.get_server_time()['time']//1000
         if timestamp % (self.timeframe * 60) == 0:
             self.timestamp = timestamp
-            quotations = self.client.get_tick_prices(self.symbol, 1, self.client.get_server_time()['time'])['quotations']
-            self.bid = quotations[0]['bid']
-            if self.lastCandle != None:
-                while self.currentCandle == self.lastCandle:
-                    time.sleep(1)
-                    self.currentCandle = self.client.get_lastn_candle_history(self.symbol, self.timeframe * 60, 1)
+
+            
+            while self.currentCandle == self.lastCandle:
+                time.sleep(1)
+                self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
                 
             self.newCandle()
             self.lastCandle = self.currentCandle
