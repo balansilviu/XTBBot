@@ -5,7 +5,7 @@ from strategies import Indicators
 from enum import Enum
 from XTBApi.api import TRANS_TYPES
 from XTBApi.api import MODES
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, time, timezone, timedelta
 
 PIP_Multiplier = {
     "EURUSD":0.0001
@@ -171,10 +171,11 @@ class Strategy:
         timestamp = self.client.get_server_time()['time']//1000
         if timestamp % (self.timeframe * 60) == 0:
             self.timestamp = timestamp
-            self.currentCandle = self.client.get_lastn_candle_history(self.symbol, self.timeframe * 60, 1)
-            if self.currentCandle == self.lastCandle:
-                print("Candle dind't updated")
-                print(self.getCurrentCandleClose())
+            if self.lastCandle != None:
+                while self.currentCandle == self.lastCandle:
+                    time.sleep(1)
+                    self.currentCandle = self.client.get_lastn_candle_history(self.symbol, self.timeframe * 60, 1)
+                
             self.newCandle()
             self.lastCandle = self.currentCandle
 
@@ -202,11 +203,14 @@ class Strategy:
         if self.BACKTEST == False:
             # Obține timpul curent și scade un minut
             
-            try:
-                timestamp = datetime.fromtimestamp(self.timestamp) - timedelta(minutes=self.timeframe)
-            except Exception as e:
-                timestamp = datetime.now()
+            # try:
+            #     timestamp = datetime.fromtimestamp(self.timestamp) - timedelta(minutes=self.timeframe)
+            # except Exception as e:
+            #     timestamp = datetime.now()
 
+            # formatted_time = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+            timestamp = datetime.now()
             formatted_time = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
             reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
