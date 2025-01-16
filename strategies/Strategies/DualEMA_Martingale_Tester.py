@@ -54,8 +54,8 @@ class TransactionPermision(Enum):
 class DualEMA_Martingale_Tester(Strategy):
     def __init__(self, client, symbol, timeframe, volume=0.1):
         super().__init__(client, symbol, timeframe, volume)
-        self.ema20 = 9
-        self.ema60 = 18
+        self.ema20 = 20
+        self.ema60 = 60
         self.underLowestEma = False
         self.consecutiveNegativeCandles = 0
         self.inTrade = False
@@ -67,10 +67,10 @@ class DualEMA_Martingale_Tester(Strategy):
         self.last_price = 0
         self.lowestEma = 0
         self.highestEma = 0
-        self.initialLot = 0.5
+        self.initialLot = 0.25
         self.currentLot = self.initialLot
         self.maximumLot = 2
-        self.stopLoss_Pips = 2.5
+        self.stopLoss_Pips = 15.9
         self.low = 0
         
         self.iteration = 0
@@ -84,7 +84,7 @@ class DualEMA_Martingale_Tester(Strategy):
         self.profit = 0
         self.spread = 0.9
         self.open_price = 0
-        self.pip_value = 4.86
+        self.pip_value = 2.43
         self.last_profit = 0
         self.trasactionOpen = False
         
@@ -251,12 +251,7 @@ class DualEMA_Martingale_Tester(Strategy):
         self.timestamp_arr = super().TEST_CURRENT_TIMESTAMP_N_VALUES(backtest_period)
 
         for i in range(1, backtest_period):
-            self.timestamp = self.timestamp_arr[i]
-            
-            if self.timestamp % Timeframe_Seconds.D1.value == 0:
-                print(self.time_arr[i])
-
-            # self.executeStrategy(i)
+            self.executeStrategy(i)
             pass
 
         # print(self.getLastTimestamp())
