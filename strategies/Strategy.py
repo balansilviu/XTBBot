@@ -75,6 +75,11 @@ class Strategy:
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, 1)
         return candle_history
     
+    def getNLastCandleDetails(self, timeframe_in_minutes, n):
+        candle_history = []
+        candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, n)
+        return candle_history
+    
     def getLastClosedTradeDetails(self):
         return self.client.get_last_closed_trade()
 
@@ -128,7 +133,7 @@ class Strategy:
         return self.bid
 
     def getCurrentCandleOpen(self):
-        return self.getLastCandleDetails(self.timeframe)[0]['open']
+        return self.getNLastCandleDetails(1, self.timeframe)[0]['open']
     
     def getLastTimestamp(self):
         candle_history = self.getNLastCandlesDetails(1, 1)
