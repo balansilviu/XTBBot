@@ -48,6 +48,7 @@ class Strategy:
         self.openTradeCount = 0
         self.appRetryConnectCount = 0
         self.current_price = 0
+        self.current_open = 0
         self.last_price = 0
         self.timestamp = 0
         
@@ -122,6 +123,9 @@ class Strategy:
     def getCurrentCandleClose(self):
         return self.getLastCandleDetails(self.timeframe)[0]['close']
     
+    def getCurrentBidPrice(self):
+        return self.client.get_symbol(self.symbol)['bid']
+
     def getCurrentCandleOpen(self):
         return self.getLastCandleDetails(self.timeframe)[0]['open']
     
@@ -165,10 +169,17 @@ class Strategy:
 
     def tick(self):
         timestamp = self.client.get_server_time()['time']//1000
-
         if timestamp % (self.timeframe * 60) == 0:
             self.timestamp = timestamp
+            self.currentCandle = self.client.get_lastn_candle_history(self.symbol, self.timeframe * 60, 1)
+            if self.currentCandle == self.lastCandle:
+                print("Candle dind't updated")
+                print(self.getCurrentCandleClose())
             self.newCandle()
+            self.lastCandle = self.currentCandle
+
+        
+        
         
     ###### DO NOT CHANGE ######
     async def __tick(self, timeframe_in_minutes):

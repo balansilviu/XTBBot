@@ -82,6 +82,7 @@ class DualEMA_Martingale(Strategy):
     
     def pricesUpdates(self):
         self.current_price = super().getCurrentCandleClose()
+        self.current_open = super().getCurrentCandleOpen()
         self.last_price = super().getLastCandleClose()
         self.lowestEma = self.getLowestEma()
         self.highestEma = self.getHighestEma()
@@ -112,7 +113,7 @@ class DualEMA_Martingale(Strategy):
                 if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.OVER_HIGH_EMA:
                     self.priceState = PriceState.WAIT_CONFIRMATION
                 elif self.lastPriceState == PriceState.WAIT_CONFIRMATION:
-                    if self.current_price <= self.last_price:
+                    if self.current_price <= self.current_open:
                         if self.transactionState == TransactionState.TRADE_CLOSED:
                             self.transactionState = TransactionState.BUY
                             self.transactionPermision = TransactionPermision.NOT_ALLOWED
@@ -121,7 +122,7 @@ class DualEMA_Martingale(Strategy):
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES
 
                 elif self.lastPriceState == PriceState.WAIT_TWO_NEGATIVES:
-                    if self.current_price <= self.last_price:
+                    if self.current_price <= self.current_open:
                         self.priceState = PriceState.WAIT_CONFIRMATION
                     else:
                         self.priceState = PriceState.WAIT_TWO_NEGATIVES
@@ -130,7 +131,7 @@ class DualEMA_Martingale(Strategy):
         else:
             pass
         self.lastPriceState = self.priceState
-        super().DEBUG_PRINT("\033m" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
+        super().DEBUG_PRINT("\033m" + str(self.priceState) + ", " + str(self.transactionState) + ", bid = " + str(self.getCurrentBidPrice()) + ", open = " + str(self.current_open) + ", close = " + str(self.current_price) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
 
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
