@@ -173,33 +173,20 @@ class Strategy:
         except Exception as e:
             self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
         pass
-
-    def tick(self):   
-
-        timestamp = self.client.get_server_time()['time']//1000
-        if timestamp % (self.timeframe * 60) == 0:
-            self.timestamp = timestamp
-            while self.currentCandle == self.lastCandle:
-                time.sleep(1)
-                self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
-                
-            self.newCandle()
-            self.lastCandle = self.currentCandle
-
-        
-        
         
     ###### DO NOT CHANGE ######
     async def __tick(self, timeframe_in_minutes):
         self.DEBUG_PRINT("\033[33mThread started.")
-        timestamp = 0
-        last_timestamp = 0
-        while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
-            timestamp = self.client.get_server_time()['time']//1000
 
-            if (timestamp != last_timestamp):
-                self.tick()
-                last_timestamp = timestamp
+        while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
+            
+            self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
+
+            if self.currentCandle != self.lastCandle and self.lastCandle != 0:
+                self.newCandle()
+
+            self.lastCandle = self.currentCandle
+
         self.DEBUG_PRINT("\033[33mThread stopped.")
 
 
