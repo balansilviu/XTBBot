@@ -145,8 +145,8 @@ class DualEMA_Martingale(Strategy):
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
-            super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
             self.setLotSize()
+            super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
             self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
