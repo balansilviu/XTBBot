@@ -58,7 +58,8 @@ class DualEMA_Martingale(Strategy):
         self.lowestEma = 0
         self.highestEma = 0
         self.initialLot = 0.25
-        self.currentLot = self.initialLot
+        self.setLot = 0.5
+        self.currentLot = self.setLot
         self.maximumLot = 2
         self.profit = 0
         
@@ -94,6 +95,14 @@ class DualEMA_Martingale(Strategy):
             self.priceState = PriceState.UNDER_LOW_EMA
         else:
             self.priceState = PriceState.BETWEEN_EMAS
+
+    def setLotSize(self):
+        if self.WasLastTradeProfitable() == False:
+            self.currentLot = self.currentLot * 2
+            if self.currentLot >= self.maximumLot:
+                self.currentLot = self.maximumLot 
+        else:
+            self.currentLot = self.initialLot
 
     def executeStrategy(self):
         self.pricesUpdates()
@@ -137,6 +146,7 @@ class DualEMA_Martingale(Strategy):
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
             super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
+            self.setLotSize()
             self.transactionState = TransactionState.TRADE_OPEN
             self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
 
@@ -145,15 +155,8 @@ class DualEMA_Martingale(Strategy):
                 super().DEBUG_PRINT("\033m============= SELL " + str(self.currentLot) + " ===============")
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
-                if self.WasLastTradeProfitable() == False:
-                    self.currentLot = self.currentLot * 2
-                    if self.currentLot >= self.maximumLot:
-                        self.currentLot = self.maximumLot 
-                else:
-                    self.currentLot = self.initialLot
-
+            
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-
                 if self.profit > 0: 
                     super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
                 else:
@@ -170,12 +173,6 @@ class DualEMA_Martingale(Strategy):
             if self.ThereIsTransactionOpen() == False:
                 self.transactionState = TransactionState.TRADE_CLOSED
                 super().DEBUG_PRINT("\033m============= STOP LOSS " + str(self.currentLot) + " ===============")
-
-                self.profit = self.profit + self.GetProfitOfLastTrade()
-
-                self.currentLot = self.currentLot * 2
-                if self.currentLot >= self.maximumLot:
-                    self.currentLot = self.maximumLot
                 
                 if self.profit > 0: 
                     super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))

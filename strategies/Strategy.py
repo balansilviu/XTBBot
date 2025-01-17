@@ -74,7 +74,6 @@ class Strategy:
     def getLastCandleDetails(self, timeframe_in_minutes):
         candle_history = []
         candle_history = self.client.get_lastn_candle_history(self.symbol, timeframe_in_minutes * 60, 1)
-        print(candle_history)
         return candle_history
     
     def getNLastCandleDetails(self, timeframe_in_minutes, n):
@@ -180,8 +179,6 @@ class Strategy:
         timestamp = self.client.get_server_time()['time']//1000
         if timestamp % (self.timeframe * 60) == 0:
             self.timestamp = timestamp
-
-            
             while self.currentCandle == self.lastCandle:
                 time.sleep(1)
                 self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
