@@ -183,8 +183,8 @@ class Strategy:
             self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
 
             if self.currentCandle != self.lastCandle and self.lastCandle != 0:
+                
                 self.newCandle()
-
             self.lastCandle = self.currentCandle
 
         self.DEBUG_PRINT("\033[33mThread stopped.")

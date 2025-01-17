@@ -36,10 +36,6 @@ for module_path in modules:
 # Adaugă toate clasele din dicționar la `globals()` după încheierea iterației
 globals().update(classes_to_add)
 
-# Testare: clasele sunt acum disponibile în `globals()`
-for strategy_name in classes_to_add:
-    print(f"Loaded class: {strategy_name}")
-
 class Timeframe(Enum):
     M1 = 1
     M5 = 5
@@ -67,7 +63,7 @@ class MainWindowController:
             strategy_table.insert("", "end", values=(strategy, chart, timeframe))
             
             # Update strategies vector and start the strategy
-
+            print(strategy)
             class_instance = globals()[strategy]
 
             new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value, float(stop_loss))
