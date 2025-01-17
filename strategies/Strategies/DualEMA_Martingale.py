@@ -59,7 +59,7 @@ class DualEMA_Martingale(Strategy):
         self.highestEma = 0
         self.initialLot = 0.25
         self.setLot = 0.5
-        self.currentLot = self.setLot
+        self.currentLot = self.initialLot
         self.maximumLot = 2
         self.profit = 0
         
