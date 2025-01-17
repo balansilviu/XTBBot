@@ -181,10 +181,9 @@ class Strategy:
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
             
             self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
-
             if self.currentCandle != self.lastCandle and self.lastCandle != 0:
-                
-                self.newCandle()
+                if(self.currentCandle % (self.timeframe * 60) == ((self.timeframe-1)*60)):
+                    self.newCandle()
             self.lastCandle = self.currentCandle
 
         self.DEBUG_PRINT("\033[33mThread stopped.")
