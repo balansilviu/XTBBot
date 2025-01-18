@@ -36,7 +36,13 @@ class LoginWindowController:
             else:
                 self.login_window.ShowError("Login Failed", "Invalid username or password")
         except Exception as e:
-            self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
+            if "Handshake status 404 Not Found" in str(e):
+                print("Market inchis")
+                self.login_window.ShowError("Login Failed", f"Login failed: Mentenanta tehnica")
+
+            else:
+                print({str(e)}) 
+                self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
 
     
 

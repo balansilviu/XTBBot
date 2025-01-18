@@ -164,30 +164,35 @@ class Strategy:
 
     def RetryLogin(self):
         try:
-            if self.appRetryConnectCount == 10:
+            if self.appRetryConnectCount == 1:
                 self.client.retry_login()
                 self.appRetryConnectCount = 0
             else:
                 self.appRetryConnectCount = self.appRetryConnectCount + 1
 
         except Exception as e:
-            self.login_window.ShowError("Login Failed", f"Login failed: {str(e)}")
+            pass
         pass
         
     ###### DO NOT CHANGE ######
     async def __tick(self, timeframe_in_minutes):
         self.DEBUG_PRINT("\033[33mThread started.")
-
-        while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire
-            
-            self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
-            if self.currentCandle != self.lastCandle and self.lastCandle != 0:
-                if(self.currentCandle % (self.timeframe * 60) == ((self.timeframe-1)*60)):
-                    self.newCandle()
-            self.lastCandle = self.currentCandle
-
+        var = True
+        while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire  
+            try:
+                self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
+                if self.currentCandle != self.lastCandle and self.lastCandle != 0:
+                    if(self.currentCandle % (self.timeframe * 60) == ((self.timeframe-1)*60)):
+                        self.newCandle()
+                        self.RetryLogin()
+                self.lastCandle = self.currentCandle
+                var = True
+            except Exception as e:
+                if var == True:
+                    print("Market inchis")
+                    self.RetryLogin()
+                    var = False
         self.DEBUG_PRINT("\033[33mThread stopped.")
-
 
 ##########################################################################################################################################
 # Functions below are used for backtest and DEBUG
