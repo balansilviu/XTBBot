@@ -3,6 +3,7 @@ from controllers.LoginWindowController import LoginWindowController
 from models.AppManager import AppManager
 
 class AppController:
+
     def __init__(self):
         self.app = ctk.CTk()
         self.appManager = AppManager()
