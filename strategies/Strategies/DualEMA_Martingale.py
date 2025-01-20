@@ -56,8 +56,8 @@ class DualEMA_Martingale(Strategy):
     maximumLot = 2
     profit = 0
     
-    def __init__(self, client, symbol, timeframe, volume, ema1, ema2):
-        super().__init__(client, symbol, timeframe, volume)
+    def __init__(self, client, symbol, ema1=20, ema2=60):
+        super().__init__(client, symbol)
         self.ema1 = ema1
         self.ema2 = ema2
         self.currentLot = self.volume

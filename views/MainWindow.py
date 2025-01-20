@@ -44,7 +44,7 @@ class MainWindow:
         timeframe_var, stop_loss_var = self.CreateTimeframeSelection(strategy_frame, strategy_var, chart_var)
         self.strategy_table = self.CreateStrategyTable(strategy_frame)
 
-        self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var, stop_loss_var)
+        self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var)
         self.CreateRemoveButton(strategy_frame)
         self.CreateTest1Button(strategy_frame, chart_var, timeframe_var)
         self.CreateTest2Button(strategy_frame, chart_var, timeframe_var)
@@ -120,8 +120,8 @@ class MainWindow:
         strategy_table.pack(pady=20, padx=10, fill="both", expand=True)
         return strategy_table
 
-    def CreateAddButton(self, strategy_frame, strategy_var, chart_var, timeframe_var, stop_loss_var):
-        ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: self.add_strategy_to_table(strategy_var.get(), chart_var.get(), timeframe_var.get(), stop_loss_var.get(), self.strategy_table)).pack(pady=10, padx=10, fill="x")
+    def CreateAddButton(self, strategy_frame, strategy_var, chart_var, timeframe_var):
+        ctk.CTkButton(strategy_frame, text="Add Strategy", command=lambda: self.add_strategy_to_table(strategy_var.get(), chart_var.get(), timeframe_var.get(), self.strategy_table)).pack(pady=10, padx=10, fill="x")
 
     def CreateRemoveButton(self, strategy_frame):
         ctk.CTkButton(strategy_frame, text="Remove Selected Strategy", command=lambda: self.remove_selected_strategy(self.strategy_table)).pack(pady=10, padx=10, fill="x")

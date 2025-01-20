@@ -52,12 +52,12 @@ class Strategy:
     BACKTEST = False
     time = ""
 
-    def __init__(self, client, symbol, timeframe, stopLoss, volume=0.1):
+    def __init__(self, client, symbol, timeframe=1, stopLoss=0, volume=0.1):
         self.client = client
         self.symbol = symbol
         self.timeframe = timeframe
-        self.volume = volume
         self.stopLoss = stopLoss
+        self.volume = volume
     
     def GetProperties(self):
         return {
