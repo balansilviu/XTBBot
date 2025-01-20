@@ -36,28 +36,47 @@ class Timeframe_Seconds(Enum):
     MN = 2592000
 
 class Strategy:
-    def __init__(self, client, symbol, timeframe, stop_loss, volume=0.1):
+
+    thread = None
+    process = None
+    lastCandle = 0
+    currentCandle = 0
+    stop_event = threading.Event()
+    openTradeCount = 0
+    appRetryConnectCount = 0
+    current_price = 0
+    current_open = 0
+    last_price = 0
+    timestamp = 0
+    bid = 0
+    BACKTEST = False
+    time = ""
+
+    def __init__(self, client, symbol, timeframe, stopLoss, volume=0.1):
         self.client = client
         self.symbol = symbol
         self.timeframe = timeframe
         self.volume = volume
-        self.thread = None
-        self.process = None
-        self.lastCandle = 0
-        self.currentCandle = 0
-        self.stop_event = threading.Event()
-        self.openTradeCount = 0
-        self.appRetryConnectCount = 0
-        self.current_price = 0
-        self.current_open = 0
-        self.last_price = 0
-        self.timestamp = 0
-        self.bid = 0
-        
-        self.BACKTEST = False
-        self.time = ""
-        self.stopLoss_Pips = stop_loss
+        self.stopLoss = stopLoss
     
+    def GetProperties(self):
+        return {
+            "Symbol": self.symbol,
+            "Timeframe": self.timeframe,
+            "StopLoss": self.stopLoss,
+            "Volume": self.volume
+        }
+    
+    def SetProperties(self, symbol=None, timeframe=None, stopLoss=None, volume=None):
+        if symbol is not None:
+            self.symbol = symbol
+        if timeframe is not None:
+            self.timeframe = timeframe
+        if stopLoss is not None:
+            self.stopLoss = stopLoss
+        if volume is not None:
+            self.volume = volume
+
     def run_strategy(self):
         asyncio.run(self.__tick(1))
 

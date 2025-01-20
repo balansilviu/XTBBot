@@ -69,9 +69,9 @@ class MainWindowController:
             new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value, float(stop_loss))
             self.appManager.strategyManager.AddStrategy(new_strategy)
             
-            # Update table
+            
 
-        
+            # Update table
             strategy_table.selection_set(strategy_table.get_children()[0])
             strategy_table.focus(strategy_table.get_children()[0])
 

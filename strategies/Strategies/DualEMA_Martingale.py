@@ -45,40 +45,54 @@ class TransactionPermision(Enum):
     ALLOWED = 2
 
 class DualEMA_Martingale(Strategy):
-    def __init__(self, client, symbol, timeframe, volume=0.1):
-        super().__init__(client, symbol, timeframe, volume)
-        self.ema20 = 20
-        self.ema60 = 60
-        self.inTrade = False
-        self.priceState = PriceState.NOT_CONFIG
-        self.lastPriceState = PriceState.NOT_CONFIG
-        self.transactionState = TransactionState.TRADE_CLOSED
-        self.transactionPermision = TransactionPermision.NOT_ALLOWED
     
-        self.lowestEma = 0
-        self.highestEma = 0
-        self.initialLot = 0.03
-        self.setLot = 0.5
-        self.currentLot = self.initialLot
-        self.maximumLot = 2
-        self.profit = 0
-        
+    inTrade = False
+    priceState = PriceState.NOT_CONFIG
+    lastPriceState = PriceState.NOT_CONFIG
+    transactionState = TransactionState.TRADE_CLOSED
+    transactionPermision = TransactionPermision.NOT_ALLOWED
+    lowestEma = 0
+    highestEma = 0
+    maximumLot = 2
+    profit = 0
+    
+    def __init__(self, client, symbol, timeframe, volume, ema1, ema2):
+        super().__init__(client, symbol, timeframe, volume)
+        self.ema1 = ema1
+        self.ema2 = ema2
+        self.currentLot = self.volume
+
+    def GetProperties(self):
+        baseProperties = super().GetProperties()
+        derivedProperties = {
+            "EMA1": self.ema1,
+            "EMA2": self.ema2
+        }
+        return {**baseProperties, **derivedProperties}
+    
+    def SetProperties(self, symbol=None, timeframe=None, stopLoss=None, volume=None, ema1=None, ema2=None):
+        super().SetProperties(symbol, timeframe, stopLoss, volume, ema1, ema2)
+        if ema1 is not None:
+            self.ema1 = ema1
+        if ema2 is not None:
+            self.ema2 = ema2
+
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
-        ema20_value = self.calculateEMA(self.ema20, self.timeframe)
-        ema60_value = self.calculateEMA(self.ema60, self.timeframe)
+        ema1_value = self.calculateEMA(self.ema1, self.timeframe)
+        ema2_value = self.calculateEMA(self.ema2, self.timeframe)
 
         # Returnează EMA-ul cel mai mare
-        highest_ema = max(ema20_value, ema60_value)
+        highest_ema = max(ema1_value, ema2_value)
         return highest_ema
 
     def getLowestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
-        ema20_value = self.calculateEMA(self.ema20, self.timeframe)
-        ema60_value = self.calculateEMA(self.ema60, self.timeframe)
+        ema1_value = self.calculateEMA(self.ema1, self.timeframe)
+        ema2_value = self.calculateEMA(self.ema2, self.timeframe)
 
         # Returnează EMA-ul cel mai mic
-        lowest_ema = min(ema20_value, ema60_value)
+        lowest_ema = min(ema1_value, ema2_value)
         return lowest_ema
     
     def pricesUpdates(self):
@@ -102,7 +116,7 @@ class DualEMA_Martingale(Strategy):
             if self.currentLot >= self.maximumLot:
                 self.currentLot = self.maximumLot 
         else:
-            self.currentLot = self.initialLot
+            self.currentLot = self.volume
 
     def executeStrategy(self):
         self.pricesUpdates()
@@ -148,7 +162,7 @@ class DualEMA_Martingale(Strategy):
             self.setLotSize()
             super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
-            self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
+            self.openTrade_stop_loss(self.currentLot, self.stopLoss)
 
         elif self.transactionState == TransactionState.SELL:
             if self.ThereIsTransactionOpen() == True:
