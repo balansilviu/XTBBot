@@ -1,7 +1,10 @@
 from PyQt5.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QComboBox, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QMessageBox
 )
-
+from PyQt5.QtWidgets import (
+    QApplication, QTableWidget, QTableWidgetItem, QComboBox, QVBoxLayout, QWidget
+)
+import sys
 
 class PropertiesWindow(QWidget):
     def __init__(self):
@@ -37,9 +40,11 @@ class PropertiesWindow(QWidget):
         # Crearea butoanelor OK și Cancel
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.on_ok_pressed)  # Conectare la funcție
+        self.ok_button.setStyleSheet(self.button_style())
 
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.on_cancel_pressed)  # Conectare la funcție
+        self.cancel_button.setStyleSheet(self.button_style())
 
         # Layout pentru butoane
         button_layout = QHBoxLayout()
@@ -97,3 +102,24 @@ class PropertiesWindow(QWidget):
     def on_cancel_pressed(self):
         """Funcția apelată când se apasă butonul Cancel."""
         self.close()
+
+    def button_style(self):
+        """Stil uniform pentru butoane."""
+        return """
+            QPushButton {
+                background-color: #0078d7;  /* Fundal albastru */
+                color: white;
+                padding: 6px 12px;
+                border-radius: 4px;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #005a9e;  /* Fundal mai închis la hover */
+            }
+        """
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = PropertiesWindow()
+    window.show()
+    sys.exit(app.exec_())

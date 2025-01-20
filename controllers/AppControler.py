@@ -9,8 +9,8 @@ class AppController:
         self.appManager = AppManager()
 
     def ConfigureApp(self):
-        ctk.set_appearance_mode("Dark")
-        ctk.set_default_color_theme("dark-blue")
+        ctk.set_appearance_mode("Light")
+        ctk.set_default_color_theme("blue")
 
     def RunApp(self):
         self.ConfigureApp()
