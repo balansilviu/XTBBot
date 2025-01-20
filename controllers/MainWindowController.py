@@ -3,6 +3,7 @@ from models.AppManager import AppManager
 from strategies.Strategy import Strategy
 from strategies.Strategies.DualEMA_Martingale_Tester import DualEMA_Martingale_Tester
 from enum import Enum
+from views.PropertiesWindow import show_properties_window
 
 import os
 import glob
@@ -55,7 +56,7 @@ class MainWindowController:
         self.appManager = AppManager()
 
     def CreateMainWindow(self):
-        self.main_window = MainWindow(self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy, self.Test1ButtonAction, self.Test2ButtonAction)
+        self.main_window = MainWindow(self.appManager, self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy, self.Test1ButtonAction, self.Test2ButtonAction)
         self.main_window.Show()
 
     def AddStrategyToTable(self, strategy, chart, timeframe, strategy_table):
@@ -66,17 +67,19 @@ class MainWindowController:
             print(strategy)
             class_instance = globals()[strategy]
 
-            new_strategy = class_instance(self.client, chart, Timeframe[timeframe].value)
-            
-            print(new_strategy.GetProperties())
-            
-            # self.appManager.strategyManager.AddStrategy(new_strategy)
-            
-            
+            new_strategy = class_instance(self.client, chart)
 
-            # # Update table
-            # strategy_table.selection_set(strategy_table.get_children()[0])
-            # strategy_table.focus(strategy_table.get_children()[0])
+            # Obține valorile din fereastra de proprietăți
+            values = show_properties_window(new_strategy.GetProperties())
+            if values is not None:
+
+                new_strategy.SetProperties(**values)
+
+            self.appManager.strategyManager.AddStrategy(new_strategy)
+
+            # Update table
+            strategy_table.selection_set(strategy_table.get_children()[0])
+            strategy_table.focus(strategy_table.get_children()[0])
 
     def RemoveSelectedStrategy(self, strategy_table):
         selected_item = strategy_table.selection()

@@ -67,15 +67,15 @@ class Strategy:
             "Volume": self.volume
         }
     
-    def SetProperties(self, symbol=None, timeframe=None, stopLoss=None, volume=None):
-        if symbol is not None:
-            self.symbol = symbol
-        if timeframe is not None:
-            self.timeframe = timeframe
-        if stopLoss is not None:
-            self.stopLoss = stopLoss
-        if volume is not None:
-            self.volume = volume
+    def SetProperties(self, **kwargs):
+        if "Symbol" in kwargs:
+            self.symbol = kwargs["Symbol"]
+        if "Timeframe" in kwargs:
+            self.timeframe = kwargs["Timeframe"]
+        if "StopLoss" in kwargs:
+            self.stopLoss = kwargs["StopLoss"]
+        if "Volume" in kwargs:
+            self.volume = kwargs["Volume"]
 
     def run_strategy(self):
         asyncio.run(self.__tick(1))

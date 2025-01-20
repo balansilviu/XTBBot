@@ -70,12 +70,12 @@ class DualEMA_Martingale(Strategy):
         }
         return {**baseProperties, **derivedProperties}
     
-    def SetProperties(self, symbol=None, timeframe=None, stopLoss=None, volume=None, ema1=None, ema2=None):
-        super().SetProperties(symbol, timeframe, stopLoss, volume, ema1, ema2)
-        if ema1 is not None:
-            self.ema1 = ema1
-        if ema2 is not None:
-            self.ema2 = ema2
+    def SetProperties(self, **kwargs):
+        super().SetProperties(**kwargs)
+        if "EMA1" in kwargs:
+            self.ema1 = kwargs["EMA1"]
+        if "EMA2" in kwargs:
+            self.ema2 = kwargs["EMA2"]
 
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate

@@ -1,10 +1,24 @@
 from PyQt5.QtWidgets import (
-    QTreeWidget, QTreeWidgetItem, QComboBox, QLineEdit, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QMessageBox, QApplication
+    QTreeWidget, QTreeWidgetItem, QComboBox, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QMessageBox, QApplication
 )
+from enum import Enum
 import sys
 
+
+class Timeframe(Enum):
+    M1 = 1
+    M5 = 5
+    M15 = 15
+    M30 = 30
+    H1 = 60
+    H4 = 240
+    D1 = 1440
+    W1 = 10080
+    MN = 43200
+
+
 class PropertiesWindow(QWidget):
-    def __init__(self):
+    def __init__(self, properties):
         super().__init__()
         self.setWindowTitle("Trading Strategy Properties")
         self.setGeometry(100, 100, 400, 350)
@@ -26,14 +40,20 @@ class PropertiesWindow(QWidget):
             }
         """)
 
-        # Adăugare proprietăți pentru strategia de trading
-        self.add_property("Timeframe", self.create_dropdown([
-            "M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN"
-        ]))
-        self.ema1_field = self.add_property("EMA 1", "12")
-        self.ema2_field = self.add_property("EMA 2", "26")
-        self.stop_loss_field = self.add_property("Stop loss", "50")
-        self.starting_lots_field = self.add_property("Starting lots", "0.1")
+        # Adăugare proprietăți din variabila `properties`
+        self.fields = {}
+        for key, value in properties.items():
+            if key == "Symbol":
+                # Adăugăm un QLabel pentru a face câmpul Symbol needitabil
+                self.fields[key] = self.add_label_property(key, value)
+            elif key == "Timeframe":
+                # Adăugăm dropdown pentru Timeframe
+                self.fields[key] = self.add_property(key, self.create_dropdown([tf.name for tf in Timeframe], str(value)))
+            else:
+                # Adăugăm câmp text pentru alte proprietăți
+                if isinstance(value, (int, float)):
+                    value = str(value)  # Convertim în string pentru afișare în QLineEdit
+                self.fields[key] = self.add_property(key, value)
 
         # Crearea butoanelor OK și Cancel
         self.ok_button = QPushButton("OK")
@@ -57,12 +77,12 @@ class PropertiesWindow(QWidget):
         self.setLayout(main_layout)
 
     def add_property(self, prop_name, value):
-        """Adaugă o proprietate în TreeWidget."""
+        """Adaugă o proprietate editabilă (QLineEdit sau QComboBox) în TreeWidget."""
         item = QTreeWidgetItem(self.tree)
         item.setText(0, prop_name)
-        line_edit = None
         if isinstance(value, QComboBox):
             self.tree.setItemWidget(item, 1, value)
+            return value
         elif isinstance(value, str):
             line_edit = QLineEdit(value)
             # Eliminăm bordura neagră din QLineEdit
@@ -73,24 +93,41 @@ class PropertiesWindow(QWidget):
                 }
             """)
             self.tree.setItemWidget(item, 1, line_edit)
-        return line_edit
+            return line_edit
 
-    def create_dropdown(self, options):
-        """Creează un dropdown box cu opțiuni."""
+    def add_label_property(self, prop_name, value):
+        """Adaugă o proprietate needitabilă (QLabel) în TreeWidget."""
+        item = QTreeWidgetItem(self.tree)
+        item.setText(0, prop_name)
+        label = QLabel(value)
+        self.tree.setItemWidget(item, 1, label)
+        return label
+
+    def create_dropdown(self, options, default_value):
+        """Creează un dropdown box cu opțiuni și selectează valoarea implicită."""
         combo = QComboBox()
         combo.addItems(options)
+        if default_value in options:
+            combo.setCurrentText(default_value)
         return combo
 
     def get_values(self):
         """Colectează valorile introduse și returnează un dicționar."""
         try:
-            values = {
-                "timeframe": self.tree.itemWidget(self.tree.topLevelItem(0), 1).currentText(),
-                "ema1": float(self.ema1_field.text()),
-                "ema2": float(self.ema2_field.text()),
-                "stop_loss": float(self.stop_loss_field.text()),
-                "starting_lots": float(self.starting_lots_field.text()),
-            }
+            values = {}
+            for key, field in self.fields.items():
+                if isinstance(field, QComboBox):
+                    # Dacă este dropdown, returnăm valoarea selectată
+                    selected_name = field.currentText()
+                    if key == "Timeframe":
+                        values[key] = Timeframe[selected_name].value  # Convertim la valoarea numerică
+                elif isinstance(field, QLineEdit):
+                    # Dacă este text, returnăm valoarea introdusă
+                    text_value = field.text()
+                    values[key] = float(text_value) if text_value.replace('.', '', 1).isdigit() else text_value
+                elif isinstance(field, QLabel):
+                    # Dacă este QLabel, returnăm textul
+                    values[key] = field.text()
             return values
         except ValueError:
             QMessageBox.critical(
@@ -129,18 +166,9 @@ class PropertiesWindow(QWidget):
 
 
 # Funcție pentru a deschide fereastra și a returna valorile
-def show_properties_window():
+def show_properties_window(properties):
     app = QApplication(sys.argv)
-    window = PropertiesWindow()
+    window = PropertiesWindow(properties)
     window.show()
     app.exec_()  # Blochează execuția până când fereastra este închisă
     return window.result  # Returnează rezultatele
-
-
-# Exemplu de utilizare
-if __name__ == "__main__":
-    values = show_properties_window()
-    if values:
-        print("Valori introduse:", values)
-    else:
-        print("Fereastra a fost anulată.")

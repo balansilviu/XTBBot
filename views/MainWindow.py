@@ -1,9 +1,9 @@
 import os
-import customtkinter as ctk
-from tkinter import StringVar, Listbox, END, ttk
-
-import os
 import glob
+import customtkinter as ctk
+from tkinter import StringVar, Listbox, END, ttk, Menu
+from views.PropertiesWindow import show_properties_window
+
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 strategies_dir = os.path.join(base_dir, "strategies/Strategies")
 modules = glob.glob(os.path.join(strategies_dir, "*.py"))
@@ -12,8 +12,10 @@ __all__ = [os.path.basename(f)[:-3] for f in modules if f.endswith(".py") and f 
 for module in __all__:
     __import__(f"strategies.Strategies.{module}")
 
+
 class MainWindow:
-    def __init__(self, on_close, all_symbols, add_strategy_to_table, remove_selected_strategy, test1_button_action, test2_button_action):
+    def __init__(self, app_manager, on_close, all_symbols, add_strategy_to_table, remove_selected_strategy, test1_button_action, test2_button_action):
+        self.AppManager = app_manager
         self.on_close = on_close
         self.all_symbols = all_symbols
         self.add_strategy_to_table = add_strategy_to_table
@@ -93,23 +95,33 @@ class MainWindow:
         self.chart_entry.bind("<FocusIn>", lambda event: chart_listbox.pack(pady=5, padx=10, fill="x"))
 
     def CreateTimeframeSelection(self, strategy_frame, strategy_var, chart_var):
-        # Frame pentru Timeframe și Stop Loss
         properties_frame = ctk.CTkFrame(strategy_frame)
         properties_frame.pack(pady=5, padx=10, fill="x")
 
-        # Select Timeframe
         ctk.CTkLabel(properties_frame, text="Timeframe:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         timeframe_var = StringVar(value="M1")
         timeframe_menu = ctk.CTkOptionMenu(properties_frame, variable=timeframe_var, values=["M1", "M5", "M30", "H1", "H4", "D1", "W1", "MN"])
         timeframe_menu.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-        # Stop Loss
         ctk.CTkLabel(properties_frame, text="Stop Loss:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        stop_loss_var = StringVar(value="10.9")  # Valoarea implicită pentru Stop Loss
+        stop_loss_var = StringVar(value="10.9")
         stop_loss_entry = ctk.CTkEntry(properties_frame, textvariable=stop_loss_var, width=100)
         stop_loss_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         return timeframe_var, stop_loss_var
+
+    def PropertiesMenu(self, strategy_table):
+        # values = show_properties_window(new_strategy.GetProperties())
+        selected_row = strategy_table.selection()
+        row_id = selected_row[0]
+        row_number = int(row_id[1:])
+        values = show_properties_window(self.AppManager.strategyManager.strategies[row_number-1].GetProperties())
+        if values is not None:
+            self.AppManager.strategyManager.strategies[row_number-1].SetProperties(**values)
+
+        print(self.AppManager.strategyManager.strategies[row_number-1].GetProperties())
+        
+
 
     def CreateStrategyTable(self, strategy_frame):
         columns = ('Strategy', 'Instrument', 'Timeframe')
@@ -118,6 +130,23 @@ class MainWindow:
         strategy_table.heading('Instrument', text='Instrument')
         strategy_table.heading('Timeframe', text='Timeframe')
         strategy_table.pack(pady=20, padx=10, fill="both", expand=True)
+
+        # Adaugare meniu de click dreapta
+        menu = Menu(strategy_table, tearoff=0)
+        menu.add_command(label="Remove", command=lambda: self.remove_selected_strategy(strategy_table))
+        menu.add_command(label="Properties", command=lambda: self.PropertiesMenu(strategy_table))
+
+        def show_context_menu(event):
+            try:
+                row_id = strategy_table.identify_row(event.y)
+                if row_id:
+                    strategy_table.selection_set(row_id)
+                    menu.post(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
+        strategy_table.bind("<Button-3>", show_context_menu)
+
         return strategy_table
 
     def CreateAddButton(self, strategy_frame, strategy_var, chart_var, timeframe_var):
