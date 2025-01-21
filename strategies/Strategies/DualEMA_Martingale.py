@@ -73,9 +73,9 @@ class DualEMA_Martingale(Strategy):
     def SetProperties(self, **kwargs):
         super().SetProperties(**kwargs)
         if "EMA1" in kwargs:
-            self.ema1 = kwargs["EMA1"]
+            self.ema1 = int(kwargs["EMA1"])
         if "EMA2" in kwargs:
-            self.ema2 = kwargs["EMA2"]
+            self.ema2 = int(kwargs["EMA2"])
 
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
@@ -154,27 +154,24 @@ class DualEMA_Martingale(Strategy):
         else:
             pass
         self.lastPriceState = self.priceState
-        super().DEBUG_PRINT("\033m" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", open = " + str(self.current_open) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
+        super().DEBUG_PRINT("" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", open = " + str(self.current_open) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
 
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
         if self.transactionState == TransactionState.BUY:
             self.setLotSize()
-            super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
+            super().DEBUG_PRINT("============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
             self.openTrade_stop_loss(self.currentLot, self.stopLoss)
 
         elif self.transactionState == TransactionState.SELL:
             if self.ThereIsTransactionOpen() == True:
-                super().DEBUG_PRINT("\033m============= SELL " + str(self.currentLot) + " ===============")
+                super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + " ===============")
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
             
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                if self.profit > 0: 
-                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
-                else:
-                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
+                super().DEBUG_PRINT("Profit = " + str(round(self.profit, 2)))
 
 
             else:
@@ -186,13 +183,9 @@ class DualEMA_Martingale(Strategy):
         elif self.transactionState == TransactionState.TRADE_OPEN:
             if self.ThereIsTransactionOpen() == False:
                 self.transactionState = TransactionState.TRADE_CLOSED
-                super().DEBUG_PRINT("\033m============= STOP LOSS " + str(self.currentLot) + " ===============")
-                
-                if self.profit > 0: 
-                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
-                else:
-                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
-        
+                super().DEBUG_PRINT("============= STOP LOSS " + str(self.currentLot) + " ===============")
+                self.profit = self.profit + self.GetProfitOfLastTrade()
+                super().DEBUG_PRINT("Profit = " + str(round(self.profit, 2)))
         else:
             pass
 

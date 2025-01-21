@@ -148,6 +148,7 @@ class DualEMA_Martingale_FirstCandle(Strategy):
             if self.ThereIsTransactionOpen() == False:
                 self.transactionState = TransactionState.TRADE_CLOSED
                 super().DEBUG_PRINT("\033m============= STOP LOSS " + str(self.currentLot) + " ===============")
+                self.profit = self.profit + self.GetProfitOfLastTrade()
                 if self.profit > 0: 
                     super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
                 else:

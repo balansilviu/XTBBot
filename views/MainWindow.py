@@ -3,6 +3,9 @@ import glob
 import customtkinter as ctk
 from tkinter import StringVar, Listbox, END, ttk, Menu
 from views.PropertiesWindow import show_properties_window
+import ctypes
+ctypes.windll.shcore.SetProcessDpiAwareness(1)
+
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 strategies_dir = os.path.join(base_dir, "strategies/Strategies")
@@ -25,15 +28,39 @@ class MainWindow:
         self.chart_entry = None
         self.strategy_table = None
 
-    def Show(self):
+    def Show(self, width=600, height=850):
+        # Activare DPI-awareness pentru dimensiuni corecte ale ecranului
+
+
         self.window = ctk.CTk()
         self.window.title("Trading Bot Interface")
-        self.window.geometry("600x850")
+        self.window.geometry(f"{width}x{height}")  # Dimensiuni parametrizabile
         self.window.resizable(False, False)
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
+        # Crearea și poziționarea strategiei
         self.CreateStrategyFrame(self.window)
+
+        # Centrează fereastra pe ecran
+        self.center_window(width, height)
+
+        # Rulează fereastra
         self.window.mainloop()
+
+    def center_window(self, width, height):
+        """Centrează exact centrul ferestrei în mijlocul ecranului."""
+        self.window.update_idletasks()  # Actualizează geometria efectivă a ferestrei
+
+        # Obține dimensiunile reale ale ecranului (corecte DPI)
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+
+        # Calculează coordonatele pentru centru
+        x = (screen_width - width) // 2
+        y = (screen_height - height * 1.5) // 2
+
+        # Setează geometria cu poziția calculată
+        self.window.geometry(f"{width}x{height}+{x}+{y}")
 
     def CreateStrategyFrame(self, trading_bot_window):
         strategy_frame = ctk.CTkFrame(trading_bot_window)
@@ -43,7 +70,7 @@ class MainWindow:
 
         strategy_var = self.CreateStrategySelection(strategy_frame)
         chart_var, self.chart_entry = self.CreateInstrumentSelection(strategy_frame)
-        timeframe_var, stop_loss_var = self.CreateTimeframeSelection(strategy_frame, strategy_var, chart_var)
+        timeframe_var = self.CreateTimeframeSelection(strategy_frame, strategy_var, chart_var)
         self.strategy_table = self.CreateStrategyTable(strategy_frame)
 
         self.CreateAddButton(strategy_frame, strategy_var, chart_var, timeframe_var)
@@ -103,12 +130,7 @@ class MainWindow:
         timeframe_menu = ctk.CTkOptionMenu(properties_frame, variable=timeframe_var, values=["M1", "M5", "M30", "H1", "H4", "D1", "W1", "MN"])
         timeframe_menu.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-        ctk.CTkLabel(properties_frame, text="Stop Loss:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
-        stop_loss_var = StringVar(value="10.9")
-        stop_loss_entry = ctk.CTkEntry(properties_frame, textvariable=stop_loss_var, width=100)
-        stop_loss_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
-
-        return timeframe_var, stop_loss_var
+        return timeframe_var
 
     def PropertiesMenu(self, strategy_table):
         # values = show_properties_window(new_strategy.GetProperties())
@@ -118,10 +140,7 @@ class MainWindow:
         values = show_properties_window(self.AppManager.strategyManager.strategies[row_number-1].GetProperties())
         if values is not None:
             self.AppManager.strategyManager.strategies[row_number-1].SetProperties(**values)
-
-        print(self.AppManager.strategyManager.strategies[row_number-1].GetProperties())
-        
-
+     
 
     def CreateStrategyTable(self, strategy_frame):
         columns = ('Strategy', 'Instrument', 'Timeframe')

@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QComboBox, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QMessageBox, QApplication
 )
+from PyQt5.QtWidgets import QDesktopWidget
+
 from enum import Enum
 import sys
 
@@ -21,8 +23,9 @@ class PropertiesWindow(QWidget):
     def __init__(self, properties):
         super().__init__()
         self.setWindowTitle("Trading Strategy Properties")
-        self.setGeometry(100, 100, 400, 350)
+        self.setGeometry(300, 300, 400, 350)
         self.result = None  # Atribuim rezultatele aici
+        self.center()  # Apelează metoda de centrare
 
         # Crearea TreeWidget-ului
         self.tree = QTreeWidget()
@@ -75,6 +78,13 @@ class PropertiesWindow(QWidget):
         main_layout.addWidget(self.tree)
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
+
+    def center(self):
+        """Centrează fereastra pe ecran."""
+        qr = self.frameGeometry()  # Obține geometria ferestrei
+        cp = QDesktopWidget().availableGeometry().center()  # Obține centrul ecranului
+        qr.moveCenter(cp)  # Mută centrul ferestrei la centrul ecranului
+        self.move(qr.topLeft())  # Mută fereastra la poziția calculată
 
     def add_property(self, prop_name, value):
         """Adaugă o proprietate editabilă (QLineEdit sau QComboBox) în TreeWidget."""

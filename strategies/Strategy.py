@@ -6,7 +6,9 @@ from enum import Enum
 from XTBApi.api import TRANS_TYPES
 from XTBApi.api import MODES
 from datetime import datetime, timezone, timedelta
-import time
+import pytz
+import os
+import re
 
 PIP_Multiplier = {
     "EURUSD":0.0001
@@ -51,8 +53,9 @@ class Strategy:
     bid = 0
     BACKTEST = False
     time = ""
+    logFile = ""
 
-    def __init__(self, client, symbol, timeframe=1, stopLoss=0, volume=0.1):
+    def __init__(self, client, symbol, timeframe=1, stopLoss=10, volume=0.1):
         self.client = client
         self.symbol = symbol
         self.timeframe = timeframe
@@ -71,11 +74,17 @@ class Strategy:
         if "Symbol" in kwargs:
             self.symbol = kwargs["Symbol"]
         if "Timeframe" in kwargs:
-            self.timeframe = kwargs["Timeframe"]
+            self.timeframe = int(kwargs["Timeframe"])
         if "StopLoss" in kwargs:
-            self.stopLoss = kwargs["StopLoss"]
+            self.stopLoss = float(kwargs["StopLoss"])
         if "Volume" in kwargs:
-            self.volume = kwargs["Volume"]
+            self.volume = float(kwargs["Volume"])
+
+    def SetLogFile(self, filename):
+        self.logFile = filename
+
+    def GetLogFile(self):
+        return self.logFile
 
     def run_strategy(self):
         asyncio.run(self.__tick(1))
@@ -195,7 +204,7 @@ class Strategy:
         
     ###### DO NOT CHANGE ######
     async def __tick(self, timeframe_in_minutes):
-        self.DEBUG_PRINT("\033[33mThread started.")
+        self.DEBUG_PRINT("Thread started.")
         var = True
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire  
             try:
@@ -208,30 +217,27 @@ class Strategy:
                 var = True
             except Exception as e:
                 if var == True:
-                    print("Market inchis")
+                    print(str(e))
                     self.RetryLogin()
                     var = False
-        self.DEBUG_PRINT("\033[33mThread stopped.")
+        self.DEBUG_PRINT("Thread stopped.")
 
 ##########################################################################################################################################
 # Functions below are used for backtest and DEBUG
 
     def DEBUG_PRINT(self, text):
         if self.BACKTEST == False:
-            # Obține timpul curent și scade un minut
-            
-            # try:
-            #     timestamp = datetime.fromtimestamp(self.timestamp) - timedelta(minutes=self.timeframe)
-            # except Exception as e:
-            #     timestamp = datetime.now()
+            # Setează fusul orar pentru București
+            bucharest_tz = pytz.timezone('Europe/Bucharest')
+            timestamp = datetime.now(bucharest_tz)
+            formatted_time = timestamp.strftime('%Y-%m-%d %H-%M-%S')
 
-            # formatted_time = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-            timestamp = datetime.now()
-            formatted_time = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-            reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
-            print(f"{formatted_time} DEBUG PRINT: {text}{reset_color}")
+            # Formatează mesajul
+            message = f"{formatted_time} DEBUG PRINT: {text}\n"
+            # Scrie mesajul în fișier (mod append)
+            with open(self.logFile, 'a') as file:
+                file.write(message)
+                            
         else:
             self.TEST_DEBUG_PRINT(self.time, text)
 

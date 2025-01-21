@@ -21,6 +21,7 @@ class LoginWindowController:
 
     def OnLogin(self):
         username, password, remember_me = self.login_window.GetCredentials()
+        self.appManager.username = username
         self.appManager.GetClientManager().username = username
         self.appManager.GetClientManager().password = password
 
@@ -59,5 +60,5 @@ class LoginWindowController:
                 self.login_window.SetCredentials(username, password, True)
 
     def OpenTradingBotInterface(self):
-        main_window_controller = MainWindowController(self.client, self.all_symbols)
+        main_window_controller = MainWindowController(self.client, self.all_symbols, self.appManager)
         main_window_controller.CreateMainWindow()

@@ -5,6 +5,7 @@ class AppManager:
     def __init__(self):
         self.clientManager = ClientManager()
         self.strategyManager = StrategyManager()
+        self.username = None
 
     def GetClientManager(self):
         return self.clientManager
