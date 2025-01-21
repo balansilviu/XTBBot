@@ -3,8 +3,11 @@ import glob
 import customtkinter as ctk
 from tkinter import StringVar, Listbox, END, ttk, Menu
 from views.PropertiesWindow import show_properties_window
-import ctypes
-ctypes.windll.shcore.SetProcessDpiAwareness(1)
+try:
+    import ctypes
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    pass
 
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

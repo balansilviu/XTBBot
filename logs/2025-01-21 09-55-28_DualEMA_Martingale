@@ -1,5 +1,0 @@
-Username: 17351757
-Strategy: DualEMA_Martingale
-2025-01-21 09-55-28 DEBUG PRINT: Thread started.
-2025-01-21 09-56-03 DEBUG PRINT: PriceState.UNDER_LOW_EMA, TransactionState.TRADE_CLOSED, close = 1.03765, open = 1.03788, low_ema = 1.03774, high_ema = 1.03788
-2025-01-21 09-57-04 DEBUG PRINT: PriceState.UNDER_LOW_EMA, TransactionState.TRADE_CLOSED, close = 1.03752, open = 1.0377, low_ema = 1.03773, high_ema = 1.03785

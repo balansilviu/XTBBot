@@ -25,7 +25,11 @@ class PropertiesWindow(QWidget):
         self.setWindowTitle("Trading Strategy Properties")
         self.setGeometry(300, 300, 400, 350)
         self.result = None  # Atribuim rezultatele aici
-        self.center()  # Apelează metoda de centrare
+        
+        try:
+            self.center()  # Apelează metoda de centrare
+        except Exception as e:
+            pass
 
         # Crearea TreeWidget-ului
         self.tree = QTreeWidget()
