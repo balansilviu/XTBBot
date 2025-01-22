@@ -45,7 +45,6 @@ class TransactionPermision(Enum):
     ALLOWED = 2
 
 class DualEMA_Martingale(Strategy):
-    
     inTrade = False
     priceState = PriceState.NOT_CONFIG
     lastPriceState = PriceState.NOT_CONFIG
@@ -53,14 +52,16 @@ class DualEMA_Martingale(Strategy):
     transactionPermision = TransactionPermision.NOT_ALLOWED
     lowestEma = 0
     highestEma = 0
-    maximumLot = 2
     profit = 0
+    queue_properties = False
+    saved_properties = None
     
     def __init__(self, client, symbol, ema1=20, ema2=60):
         super().__init__(client, symbol)
         self.ema1 = ema1
         self.ema2 = ema2
         self.currentLot = self.volume
+        self.maximumLot = 4 * self.volume
 
     def GetProperties(self):
         baseProperties = super().GetProperties()
@@ -71,11 +72,25 @@ class DualEMA_Martingale(Strategy):
         return {**baseProperties, **derivedProperties}
     
     def SetProperties(self, **kwargs):
-        super().SetProperties(**kwargs)
-        if "EMA1" in kwargs:
-            self.ema1 = int(kwargs["EMA1"])
-        if "EMA2" in kwargs:
-            self.ema2 = int(kwargs["EMA2"])
+        if self.transactionState == TransactionState.TRADE_CLOSED:
+            new_timeframe = int(kwargs["Timeframe"])
+            if new_timeframe != self.timeframe:
+                self.priceState = PriceState.NOT_CONFIG
+            new_ema1 = int(kwargs["EMA1"])
+            if new_ema1 != self.ema1:
+                self.priceState = PriceState.NOT_CONFIG
+            new_ema2 = int(kwargs["EMA2"])
+            if new_ema2 != self.ema2:
+                self.priceState = PriceState.NOT_CONFIG
+            
+            super().SetProperties(**kwargs)
+            if "EMA1" in kwargs:
+                self.ema1 = int(kwargs["EMA1"])
+            if "EMA2" in kwargs:
+                self.ema2 = int(kwargs["EMA2"])
+        else:
+            self.queue_properties = True
+            self.saved_properties = kwargs
 
     def getHighestEma(self):
         # Calculează valorile EMA pentru perioadele specificate
@@ -120,8 +135,18 @@ class DualEMA_Martingale(Strategy):
 
     def executeStrategy(self):
         self.pricesUpdates()
-        self.dispatchPriceStateMachine()
+        # self.dispatchPriceStateMachine()
+        if self.transactionState == TransactionState.TRADE_CLOSED:
+            self.transactionState = TransactionState.BUY
+        if self.transactionState == TransactionState.TRADE_OPEN:
+            self.transactionState = TransactionState.SELL
+
+        
+        
         self.dispatchTransactionStateMachine()
+
+        print("Current lot = " + str(self.currentLot))
+        print("volume = " + str(self.volume))
 
     def dispatchPriceStateMachine(self):
         if self.priceState == PriceState.OVER_HIGH_EMA:
@@ -172,11 +197,13 @@ class DualEMA_Martingale(Strategy):
             
                 self.profit = self.profit + self.GetProfitOfLastTrade()
                 super().DEBUG_PRINT("Profit = " + str(round(self.profit, 2)))
-
-
             else:
                 pass
         elif self.transactionState == TransactionState.TRADE_CLOSED:
+            if self.queue_properties == True:
+                self.SetProperties(self.saved_properties)
+                self.queue_properties = False
+                
             if self.ThereIsTransactionOpen() == True:
                 self.transactionState = TransactionState.TRADE_OPEN
 
@@ -191,10 +218,6 @@ class DualEMA_Martingale(Strategy):
 
     def newCandle(self):  
         super().newCandle()
-
-        self.pricesUpdates()
-        # self.DEBUG_PRINT("Close = " + str(self.current_price) + ", last = " + str(self.last_price) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
-
-        self.executeStrategy()  
+        self.executeStrategy() 
 
 

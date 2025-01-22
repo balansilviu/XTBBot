@@ -1,6 +1,7 @@
 from views.MainWindow import MainWindow
 from models.AppManager import AppManager
 from strategies.Strategy import Strategy
+from strategies.Strategies.DualEMA_Martingale import DualEMA_Martingale
 from strategies.Strategies.DualEMA_Martingale_Tester import DualEMA_Martingale_Tester
 from enum import Enum
 from views.PropertiesWindow import show_properties_window
@@ -52,11 +53,15 @@ class Timeframe(Enum):
     MN = 43200
 
 class MainWindowController:
+
+
     def __init__(self, client, all_symbols, appManager):
         self.client = client
         self.all_symbols = all_symbols
         self.main_window = None
         self.appManager = appManager
+        self.strategy = None
+
 
     def CreateMainWindow(self):
         self.main_window = MainWindow(self.appManager, self.OnClose, self.all_symbols, self.AddStrategyToTable, self.RemoveSelectedStrategy, self.Test1ButtonAction, self.Test2ButtonAction)
@@ -129,14 +134,18 @@ class MainWindowController:
 
     def Test1ButtonAction(self, chart, timeframe):
         strategy = Strategy(self.client, chart, timeframe, volume=0.1)
-        strategy.openTrade_stop_loss(0.5, 2)
+
+        # self.strategy = DualEMA_Martingale(self.client, chart, 1, 10, 0.03, 20, 60)
+        self.strategy = DualEMA_Martingale(self.client, chart, 20, 60)
+        print(self.strategy.GetProperties())
+
+        self.strategy.openTrade_stop_loss(0.03, 15.9)
 
     def Test2ButtonAction(self, chart, timeframe):
         # print(self.client.get_last_closed_trade())
 
-        strategy = DualEMA_Martingale_Tester(self.client, chart, Timeframe[timeframe].value, volume=0.5)
-
-        strategy.Test()
+        
+        self.strategy.closeTrade()
         
         pass
 

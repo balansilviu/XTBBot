@@ -55,7 +55,7 @@ class Strategy:
     time = ""
     logFile = ""
 
-    def __init__(self, client, symbol, timeframe=1, stopLoss=10, volume=0.1):
+    def __init__(self, client, symbol, timeframe=1, stopLoss=10, volume=0.03):
         self.client = client
         self.symbol = symbol
         self.timeframe = timeframe
@@ -175,9 +175,10 @@ class Strategy:
     def openTrade(self, volume=0.1, stop_loss=0):
         self.client.open_trade(MODES.BUY.value, self.symbol, volume, stop_loss)
 
-    def openTrade_stop_loss(self, volume=0.1, stop_loss=0):
+    def openTrade_stop_loss(self, volume=0.03, stop_loss=0):
         # self.DEBUG_PRINT(stop_loss * PIP_Multiplier[self.symbol])
-        self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, stop_loss * PIP_Multiplier[self.symbol])
+        print(stop_loss)
+        self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, float(stop_loss) * PIP_Multiplier[self.symbol])
 
     def closeTrade(self):
         try:
@@ -216,10 +217,7 @@ class Strategy:
                 self.lastCandle = self.currentCandle
                 var = True
             except Exception as e:
-                if var == True:
-                    print(str(e))
-                    self.RetryLogin()
-                    var = False
+                self.RetryLogin()
         self.DEBUG_PRINT("Thread stopped.")
 
 ##########################################################################################################################################

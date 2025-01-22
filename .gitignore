@@ -1,0 +1,5 @@
+# Ignoră folderul logs
+# logs/
+
+# Ignoră fișierele care încep cu login_data și au orice extensie
+# login_data.*
