@@ -53,6 +53,7 @@ class Strategy:
     BACKTEST = False
     time = ""
     logFile = ""
+    firstSet = True
 
     def __init__(self, client, symbol, timeframe=1, stopLoss=10, volume=0.03):
         self.client = client

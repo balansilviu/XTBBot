@@ -126,11 +126,15 @@ class DualEMA_Martingale(Strategy):
             self.priceState = PriceState.BETWEEN_EMAS
 
     def setLotSize(self):
-        if self.WasLastTradeProfitable() == False:
-            self.currentLot = self.currentLot * 2
-            if self.currentLot >= self.maximumLot:
-                self.currentLot = self.maximumLot 
+        if self.firstSet == False:
+            if self.WasLastTradeProfitable() == False:
+                self.currentLot = self.currentLot * 2
+                if self.currentLot >= self.maximumLot:
+                    self.currentLot = self.maximumLot 
+            else:
+                self.currentLot = self.volume
         else:
+            self.firstSet = False
             self.currentLot = self.volume
 
     def executeStrategy(self):
