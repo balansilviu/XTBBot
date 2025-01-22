@@ -15,7 +15,7 @@ from datetime import datetime
 from websocket import create_connection
 from websocket._exceptions import WebSocketConnectionClosedException
 
-from XTBApi.exceptions import *
+from api.exceptions import *
 
 LOGGER = logging.getLogger('XTBApi.api')
 logging.disable(logging.CRITICAL)

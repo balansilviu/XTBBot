@@ -142,9 +142,6 @@ class DualEMA_Martingale(Strategy):
         #     self.transactionState = TransactionState.SELL
         self.dispatchTransactionStateMachine()
 
-        print("Current lot = " + str(self.currentLot))
-        print("volume = " + str(self.volume))
-
     def dispatchPriceStateMachine(self):
         if self.priceState == PriceState.OVER_HIGH_EMA:
             self.transactionPermision = TransactionPermision.ALLOWED
