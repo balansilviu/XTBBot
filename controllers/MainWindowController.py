@@ -82,6 +82,7 @@ class MainWindowController:
             if values is not None:
                 new_strategy.SetProperties(**values)
 
+            print(new_strategy.GetProperties())
             file_name = self.CreateLogFile(strategy)
             new_strategy.SetLogFile(file_name)
             self.appManager.strategyManager.AddStrategy(new_strategy)

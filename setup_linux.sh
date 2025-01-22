@@ -11,4 +11,5 @@ python3 -m pip install --upgrade pip setuptools wheel
 python3 -m pip install testresources
 python3 -m pip install PyQt5
 python3 -m pip install --upgrade pip setuptools wheel
-python3 -m pip install ta
+python3 -m pip install setuptools==65.5.0
+python3 -m pip install ta==0.7.0

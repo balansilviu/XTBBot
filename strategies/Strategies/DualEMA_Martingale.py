@@ -177,7 +177,7 @@ class DualEMA_Martingale(Strategy):
         else:
             pass
         self.lastPriceState = self.priceState
-        super().DEBUG_PRINT("" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", open = " + str(self.current_open) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
+        super().DEBUG_PRINT("" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", open = " + str(self.current_open) + ", volume = " + str(self.volume) + ", stop loss = " + str(self.stopLoss))
 
     def dispatchTransactionStateMachine(self):
         # Transaction dispatch states
