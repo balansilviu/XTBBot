@@ -135,14 +135,11 @@ class DualEMA_Martingale(Strategy):
 
     def executeStrategy(self):
         self.pricesUpdates()
-        # self.dispatchPriceStateMachine()
-        if self.transactionState == TransactionState.TRADE_CLOSED:
-            self.transactionState = TransactionState.BUY
-        if self.transactionState == TransactionState.TRADE_OPEN:
-            self.transactionState = TransactionState.SELL
-
-        
-        
+        self.dispatchPriceStateMachine()
+        # if self.transactionState == TransactionState.TRADE_CLOSED:
+        #     self.transactionState = TransactionState.BUY
+        # if self.transactionState == TransactionState.TRADE_OPEN:
+        #     self.transactionState = TransactionState.SELL
         self.dispatchTransactionStateMachine()
 
         print("Current lot = " + str(self.currentLot))

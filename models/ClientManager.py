@@ -1,4 +1,4 @@
-from api.xtb_client import Client
+from api.xtb_api import Client
 
 class ClientManager:
     def __init__(self):

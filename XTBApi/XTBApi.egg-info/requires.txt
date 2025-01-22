@@ -1,4 +1,0 @@
-websocket_client
-
-[test]
-pytest

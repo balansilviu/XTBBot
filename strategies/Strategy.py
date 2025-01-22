@@ -3,8 +3,7 @@ import datetime
 import asyncio
 from strategies import Indicators
 from enum import Enum
-from XTBApi.api import TRANS_TYPES
-from XTBApi.api import MODES
+from api.xtb_api import MODES
 from datetime import datetime, timezone, timedelta
 import pytz
 import os
