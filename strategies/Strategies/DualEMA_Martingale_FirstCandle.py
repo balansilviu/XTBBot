@@ -45,23 +45,52 @@ class TransactionPermision(Enum):
     ALLOWED = 2
 
 class DualEMA_Martingale_FirstCandle(Strategy):
-    def __init__(self, client, symbol, timeframe, volume=0.1):
-        super().__init__(client, symbol, timeframe, volume)
-        self.ema20 = 20
-        self.ema60 = 60
-        self.inTrade = False
-        self.priceState = PriceState.NOT_CONFIG
-        self.lastPriceState = PriceState.NOT_CONFIG
-        self.transactionState = TransactionState.TRADE_CLOSED
-        self.transactionPermision = TransactionPermision.NOT_ALLOWED
+    inTrade = False
+    priceState = PriceState.NOT_CONFIG
+    lastPriceState = PriceState.NOT_CONFIG
+    transactionState = TransactionState.TRADE_CLOSED
+    transactionPermision = TransactionPermision.NOT_ALLOWED
+    lowestEma = 0
+    highestEma = 0
+    profit = 0
+    queue_properties = False
+    saved_properties = None
     
-        self.lowestEma = 0
-        self.highestEma = 0
-        self.initialLot = 0.25
-        self.setLot = 0.5
-        self.currentLot = self.initialLot
-        self.maximumLot = 2
-        self.profit = 0
+    def __init__(self, client, symbol, ema1=20, ema2=60):
+        super().__init__(client, symbol)
+        self.ema1 = ema1
+        self.ema2 = ema2
+        self.currentLot = self.volume
+        self.maximumLot = 4 * self.volume
+
+    def GetProperties(self):
+        baseProperties = super().GetProperties()
+        derivedProperties = {
+            "EMA1": self.ema1,
+            "EMA2": self.ema2
+        }
+        return {**baseProperties, **derivedProperties}
+    
+    def SetProperties(self, **kwargs):
+        if self.transactionState == TransactionState.TRADE_CLOSED:
+            new_timeframe = int(kwargs["Timeframe"])
+            if new_timeframe != self.timeframe:
+                self.priceState = PriceState.NOT_CONFIG
+            new_ema1 = int(kwargs["EMA1"])
+            if new_ema1 != self.ema1:
+                self.priceState = PriceState.NOT_CONFIG
+            new_ema2 = int(kwargs["EMA2"])
+            if new_ema2 != self.ema2:
+                self.priceState = PriceState.NOT_CONFIG
+            
+            super().SetProperties(**kwargs)
+            if "EMA1" in kwargs:
+                self.ema1 = int(kwargs["EMA1"])
+            if "EMA2" in kwargs:
+                self.ema2 = int(kwargs["EMA2"])
+        else:
+            self.queue_properties = True
+            self.saved_properties = kwargs
         
     def getHighestEma(self):
         ema20_value = self.calculateEMA(self.ema20, self.timeframe)
@@ -89,12 +118,16 @@ class DualEMA_Martingale_FirstCandle(Strategy):
             self.priceState = PriceState.BETWEEN_EMAS
 
     def setLotSize(self):
-        if self.WasLastTradeProfitable() == False:
-            self.currentLot = self.currentLot * 2
-            if self.currentLot >= self.maximumLot:
-                self.currentLot = self.maximumLot 
+        if self.firstSet == False:
+            if self.WasLastTradeProfitable() == False:
+                self.currentLot = self.currentLot * 2
+                if self.currentLot >= self.maximumLot:
+                    self.currentLot = self.maximumLot 
+            else:
+                self.currentLot = self.volume
         else:
-            self.currentLot = self.initialLot
+            self.firstSet = False
+            self.currentLot = self.volume
 
     def executeStrategy(self):
         self.pricesUpdates()
@@ -125,34 +158,35 @@ class DualEMA_Martingale_FirstCandle(Strategy):
     def dispatchTransactionStateMachine(self):
         if self.transactionState == TransactionState.BUY:
             self.setLotSize()
-            super().DEBUG_PRINT("\033m============== BUY " + str(self.currentLot) + " ===============")
+            super().DEBUG_PRINT("============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
-            self.openTrade_stop_loss(self.currentLot, self.stopLoss_Pips)
+            self.openTrade_stop_loss(self.currentLot, self.stopLoss)
+
         elif self.transactionState == TransactionState.SELL:
             if self.ThereIsTransactionOpen() == True:
-                super().DEBUG_PRINT("\033m============= SELL " + str(self.currentLot) + " ===============")
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
-            
+                trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                if self.profit > 0: 
-                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
-                else:
-                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
+                super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + ", Profit = " + str(trade_profit) + "===============")
+                super().DEBUG_PRINT("TOTAL PROFIT = " + str(round(self.profit, 2)))
             else:
                 pass
         elif self.transactionState == TransactionState.TRADE_CLOSED:
+            if self.queue_properties == True:
+                self.SetProperties(self.saved_properties)
+                self.queue_properties = False
+                
             if self.ThereIsTransactionOpen() == True:
                 self.transactionState = TransactionState.TRADE_OPEN
+
         elif self.transactionState == TransactionState.TRADE_OPEN:
             if self.ThereIsTransactionOpen() == False:
                 self.transactionState = TransactionState.TRADE_CLOSED
-                super().DEBUG_PRINT("\033m============= STOP LOSS " + str(self.currentLot) + " ===============")
+                trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                if self.profit > 0: 
-                    super().DEBUG_PRINT("\033[32mProfit = " + str(round(self.profit, 2)))
-                else:
-                    super().DEBUG_PRINT("\033[31mProfit = " + str(round(self.profit, 2)))
+                super().DEBUG_PRINT("============= STOP LOSS " + str(self.currentLot) + ", Profit = " + str(trade_profit) + "===============")
+                super().DEBUG_PRINT("TOTAL PROFIT = " + str(round(self.profit, 2)))
         else:
             pass
 

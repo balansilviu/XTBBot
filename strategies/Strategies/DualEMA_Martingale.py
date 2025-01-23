@@ -84,6 +84,7 @@ class DualEMA_Martingale(Strategy):
                 self.priceState = PriceState.NOT_CONFIG
             
             super().SetProperties(**kwargs)
+            self.maximumLot = 4 * self.volume
             if "EMA1" in kwargs:
                 self.ema1 = int(kwargs["EMA1"])
             if "EMA2" in kwargs:
@@ -184,7 +185,7 @@ class DualEMA_Martingale(Strategy):
                 self.closeTrade()
                 trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + ", Profit = " + str(trade_profit) + "===============")
+                super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + ", Profit = " + str(trade_profit) + " ===============")
                 super().DEBUG_PRINT("TOTAL PROFIT = " + str(round(self.profit, 2)))
             else:
                 pass
@@ -201,7 +202,7 @@ class DualEMA_Martingale(Strategy):
                 self.transactionState = TransactionState.TRADE_CLOSED
                 trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                super().DEBUG_PRINT("============= STOP LOSS " + str(self.currentLot) + ", Profit = " + str(trade_profit) + "===============")
+                super().DEBUG_PRINT("============= STOP LOSS " + str(self.currentLot) + ", Profit = " + str(trade_profit) + " ===============")
                 super().DEBUG_PRINT("TOTAL PROFIT = " + str(round(self.profit, 2)))
         else:
             pass
