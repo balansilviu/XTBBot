@@ -176,7 +176,10 @@ class Strategy:
         self.client.open_trade(MODES.BUY.value, self.symbol, volume, stop_loss)
 
     def openTrade_stop_loss(self, volume=0.03, stop_loss=0):
-        self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, float(stop_loss) * PIP_Multiplier[self.symbol])
+        try:
+            self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, float(stop_loss) * PIP_Multiplier[self.symbol])
+        except Exception as e:
+            self.DEBUG_PRINT("Tranzactia nu a putut fi deschisa: "+ str(self.GetProperties()))
 
     def closeTrade(self):
         try:
