@@ -3,6 +3,7 @@ from ta.trend import EMAIndicator
 import ta
 import pandas as pd
 from enum import Enum
+import time
 
 class Timeframe(Enum):
     M1 = 1
@@ -183,6 +184,7 @@ class DualEMA_Martingale(Strategy):
             if self.ThereIsTransactionOpen() == True:
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
+                time.sleep(3)
                 trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
                 super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + ", Profit = " + str(trade_profit) + " ===============")
