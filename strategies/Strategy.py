@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 import pytz
 import os
 import re
+import time
 
 PIP_Multiplier = {
     "EURUSD":0.0001
@@ -208,18 +209,29 @@ class Strategy:
     async def __tick(self, timeframe_in_minutes):
         self.DEBUG_PRINT("Thread started.")
         var = True
+
+        seconds = datetime.now().second
+        while seconds != 0:
+            await asyncio.sleep(1)
+            seconds = datetime.now().second
+
+        log_var = True
         while not self.stop_event.is_set():  # Verifică dacă s-a dat semnalul de oprire  
             try:
                 self.currentCandle = self.getLastCandleDetails(1)[0]['timestamp']
                 if self.currentCandle != self.lastCandle and self.lastCandle != 0:
                     if(self.currentCandle % (self.timeframe * 60) == ((self.timeframe-1)*60)):
                         self.newCandle()
-                        self.RetryLogin()
+                    else:
+                        pass
+                else:
+                    pass
                 self.lastCandle = self.currentCandle
-                var = True
-            except Exception as e:
+                await asyncio.sleep(1)
+            except:
                 self.RetryLogin()
         self.DEBUG_PRINT("Thread stopped.")
+
 
 ##########################################################################################################################################
 # Functions below are used for backtest and DEBUG
@@ -240,6 +252,20 @@ class Strategy:
         else:
             self.TEST_DEBUG_PRINT(self.time, text)
 
+    def DEBUG_PRINT_CONSOLE(self, text):
+        if self.BACKTEST == False:
+            # Setează fusul orar pentru București
+            bucharest_tz = pytz.timezone('Europe/Bucharest')
+            timestamp = datetime.now(bucharest_tz)
+            formatted_time = timestamp.strftime('%Y-%m-%d %H-%M-%S')
+
+            # Formatează mesajul
+            message = f"{formatted_time} DEBUG PRINT: {text}"
+            # Scrie mesajul în fișier (mod append)
+            print(message)
+                            
+        else:
+            self.TEST_DEBUG_PRINT(self.time, text)
 
     def TEST_DEBUG_PRINT(self, time, text):
         reset_color = "\033[0m"  # Codul ANSI pentru resetarea culorii
@@ -284,3 +310,4 @@ class Strategy:
             ema = Indicators.EMA(close_array_i, ema_period)
             arr.append(round(float(ema), 5))
         return arr
+

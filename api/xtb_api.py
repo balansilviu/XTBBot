@@ -147,7 +147,7 @@ class BaseClient(object):
         self.password = password
         """login command"""
         data = _get_data("login", userId=user_id, password=password)
-        print(f"Sending data: {data}")  # For debugging
+        # print(f"Sending data: {data}")  # For debugging
         self.ws = create_connection(f"wss://ws.xtb.com/{mode}")
         response = self._send_command(data)
         self._login_data = (user_id, password)
