@@ -3,6 +3,8 @@ from ta.trend import EMAIndicator
 import ta
 import pandas as pd
 from enum import Enum
+import time
+from strategies.Strategy import MODES
 
 class Timeframe(Enum):
     M1 = 1
@@ -44,7 +46,7 @@ class TransactionPermision(Enum):
     NOT_ALLOWED = 1
     ALLOWED = 2
 
-class DualEMA_Martingale_FirstCandle(Strategy):
+class DualEMA_Martingale_LotSize(Strategy):
     inTrade = False
     priceState = PriceState.NOT_CONFIG
     lastPriceState = PriceState.NOT_CONFIG
@@ -85,6 +87,7 @@ class DualEMA_Martingale_FirstCandle(Strategy):
                 self.priceState = PriceState.NOT_CONFIG
             
             super().SetProperties(**kwargs)
+            self.maximumLot = 4 * self.volume
             if "EMA1" in kwargs:
                 self.ema1 = int(kwargs["EMA1"])
             if "EMA2" in kwargs:
@@ -92,17 +95,19 @@ class DualEMA_Martingale_FirstCandle(Strategy):
         else:
             self.queue_properties = True
             self.saved_properties = kwargs
-        
+
     def getHighestEma(self):
-        ema20_value = self.calculateEMA(self.ema20, self.timeframe)
-        ema60_value = self.calculateEMA(self.ema60, self.timeframe)
-        highest_ema = max(ema20_value, ema60_value)
+        ema1_value = self.calculateEMA(self.ema1, self.timeframe)
+        ema2_value = self.calculateEMA(self.ema2, self.timeframe)
+
+        highest_ema = max(ema1_value, ema2_value)
         return highest_ema
 
     def getLowestEma(self):
-        ema20_value = self.calculateEMA(self.ema20, self.timeframe)
-        ema60_value = self.calculateEMA(self.ema60, self.timeframe)
-        lowest_ema = min(ema20_value, ema60_value)
+        ema1_value = self.calculateEMA(self.ema1, self.timeframe)
+        ema2_value = self.calculateEMA(self.ema2, self.timeframe)
+
+        lowest_ema = min(ema1_value, ema2_value)
         return lowest_ema
     
     def pricesUpdates(self):
@@ -111,6 +116,8 @@ class DualEMA_Martingale_FirstCandle(Strategy):
         self.last_price = super().getLastCandleClose()
         self.lowestEma = self.getLowestEma()
         self.highestEma = self.getHighestEma()
+        
+        
         if self.current_price > self.highestEma:
             self.priceState = PriceState.OVER_HIGH_EMA
         elif self.current_price < self.lowestEma:
@@ -121,7 +128,7 @@ class DualEMA_Martingale_FirstCandle(Strategy):
     def setLotSize(self):
         if self.firstSet == False:
             if self.WasLastTradeProfitable() == False:
-                self.currentLot = self.currentLot * 2
+                self.currentLot = self.currentLot + self.volume
                 if self.currentLot >= self.maximumLot:
                     self.currentLot = self.maximumLot 
                 self.negative_trades_counter = self.negative_trades_counter + 1
@@ -149,30 +156,43 @@ class DualEMA_Martingale_FirstCandle(Strategy):
                 pass
             else:
                 if self.lastPriceState == PriceState.BETWEEN_EMAS or self.lastPriceState == PriceState.OVER_HIGH_EMA:
-                    self.transactionState = TransactionState.BUY
-                    self.transactionPermision = TransactionPermision.NOT_ALLOWED
-                    self.priceState = PriceState.UNDER_LOW_EMA
+                    self.priceState = PriceState.WAIT_CONFIRMATION
+                elif self.lastPriceState == PriceState.WAIT_CONFIRMATION:
+                    if self.current_price <= self.current_open:
+                        if self.transactionState == TransactionState.TRADE_CLOSED:
+                            self.transactionState = TransactionState.BUY
+                            self.transactionPermision = TransactionPermision.NOT_ALLOWED
+                            self.priceState = PriceState.UNDER_LOW_EMA
+                    else:
+                        self.priceState = PriceState.WAIT_TWO_NEGATIVES
+
+                elif self.lastPriceState == PriceState.WAIT_TWO_NEGATIVES:
+                    if self.current_price <= self.current_open:
+                        self.priceState = PriceState.WAIT_CONFIRMATION
+                    else:
+                        self.priceState = PriceState.WAIT_TWO_NEGATIVES
                 else:
                     pass
         else:
             pass
         self.lastPriceState = self.priceState
-        super().DEBUG_PRINT("\033m" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", open = " + str(self.current_open) + ", low_ema = " + str(round(self.lowestEma, 5)) + ", high_ema = " + str(round(self.highestEma, 5)))
+        super().DEBUG_PRINT("" + str(self.priceState) + ", " + str(self.transactionState) + ", close = " + str(self.current_price) + ", open = " + str(self.current_open) + ", volume = " + str(self.volume) + ", stop loss = " + str(self.stopLoss))
 
     def dispatchTransactionStateMachine(self):
         if self.transactionState == TransactionState.BUY:
             self.setLotSize()
             super().DEBUG_PRINT("============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
-            self.openTrade_stop_loss(self.currentLot, self.stopLoss)
+            self.openTrade_stop_loss(MODES.BUY.value, self.currentLot, self.stopLoss)
 
         elif self.transactionState == TransactionState.SELL:
             if self.ThereIsTransactionOpen() == True:
                 self.transactionState = TransactionState.TRADE_CLOSED
                 self.closeTrade()
+                time.sleep(3)
                 trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + ", Profit = " + str(trade_profit) + "===============")
+                super().DEBUG_PRINT("============= SELL " + str(self.currentLot) + ", Profit = " + str(trade_profit) + " ===============")
                 super().DEBUG_PRINT("TOTAL PROFIT = " + str(round(self.profit, 2)))
             else:
                 pass
@@ -189,14 +209,13 @@ class DualEMA_Martingale_FirstCandle(Strategy):
                 self.transactionState = TransactionState.TRADE_CLOSED
                 trade_profit = round(self.GetProfitOfLastTrade(), 2)
                 self.profit = self.profit + self.GetProfitOfLastTrade()
-                super().DEBUG_PRINT("============= STOP LOSS " + str(self.currentLot) + ", Profit = " + str(trade_profit) + "===============")
+                super().DEBUG_PRINT("============= STOP LOSS " + str(self.currentLot) + ", Profit = " + str(trade_profit) + " ===============")
                 super().DEBUG_PRINT("TOTAL PROFIT = " + str(round(self.profit, 2)))
         else:
             pass
 
     def newCandle(self):  
         super().newCandle()
-        self.pricesUpdates()
-        self.executeStrategy()  
+        self.executeStrategy() 
 
 

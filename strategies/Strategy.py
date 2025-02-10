@@ -6,6 +6,7 @@ from enum import Enum
 from api.xtb_api import MODES
 from datetime import datetime, timezone, timedelta
 import pytz
+import pandas as pd
 import os
 import re
 import time
@@ -13,6 +14,16 @@ import time
 PIP_Multiplier = {
     "EURUSD":0.0001
 }
+
+class MODES(Enum):
+    BUY = 0
+    SELL = 1
+    BUY_LIMIT = 2
+    SELL_LIMIT = 3
+    BUY_STOP = 4
+    SELL_STOP = 5
+    BALANCE = 6
+    CREDIT = 7
 
 class Timeframe(Enum):
     M1 = 1
@@ -56,7 +67,7 @@ class Strategy:
     logFile = ""
     firstSet = True
 
-    def __init__(self, client, symbol, timeframe=1, stopLoss=10, volume=0.03):
+    def __init__(self, client, symbol, timeframe=1, stopLoss=10, volume=0.3):
         self.client = client
         self.symbol = symbol
         self.timeframe = timeframe
@@ -67,7 +78,6 @@ class Strategy:
         return {
             "Symbol": self.symbol,
             "Timeframe": self.timeframe,
-            "StopLoss": self.stopLoss,
             "Volume": self.volume
         }
     
@@ -88,7 +98,7 @@ class Strategy:
         return self.logFile
 
     def run_strategy(self):
-        asyncio.run(self.__tick(1))
+        asyncio.run(self._tick(1))
 
     def run(self):
         """Run the trading strategy in a separate thread"""
@@ -142,6 +152,14 @@ class Strategy:
     def calculateSMA(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
         return Indicators.SMA(self.extractLabelValues(candle_history, "close"), period)
+    
+    def calculateATR(self, length, timeframe):
+        candle_history = self.getNLastCandlesDetails(timeframe, 1000)
+        return Indicators.ATR(pd.DataFrame(candle_history), length)
+    
+    def calculateSMA(self, period, timeframe):
+        candle_history = self.getNLastCandlesDetails(timeframe, period)
+        return Indicators.SMA(self.extractLabelValues(candle_history, "close"), period)
 
     def calculateRSI(self, period, timeframe):
         candle_history = self.getNLastCandlesDetails(timeframe, period)
@@ -173,12 +191,12 @@ class Strategy:
     def getLastCandleClose(self):
         return self.getNLastCandlesDetails(self.timeframe,2)[0]['close']
     
-    def openTrade(self, volume=0.1, stop_loss=0):
-        self.client.open_trade(MODES.BUY.value, self.symbol, volume, stop_loss)
+    def openTrade(self, mode=MODES.BUY.value, volume=0.1, stop_loss=0):
+        self.client.open_trade(mode, self.symbol, volume, stop_loss)
 
-    def openTrade_stop_loss(self, volume=0.03, stop_loss=0):
+    def openTrade_SL_TP(self, mode=MODES.BUY.value, volume=0.03, stop_loss=0, take_profit=0):
         try:
-            self.client.open_trade_stop_loss(MODES.BUY.value, self.symbol, volume, float(stop_loss) * PIP_Multiplier[self.symbol])
+            self.client.open_trade_SL_TP(mode, self.symbol, volume, float(stop_loss) * PIP_Multiplier[self.symbol], float(take_profit) * PIP_Multiplier[self.symbol])
         except Exception as e:
             self.DEBUG_PRINT("Tranzactia nu a putut fi deschisa: "+ str(self.GetProperties()))
 
@@ -190,6 +208,12 @@ class Strategy:
                 self.client.close_trade(order_id)
             else:
                 self.DEBUG_PRINT("Nu există tranzacții deschise de închis.")
+        except Exception as e:
+            self.DEBUG_PRINT(str(e))
+
+    def closeAllTrades(self):
+        try:
+            self.client.close_all_trades()
         except Exception as e:
             self.DEBUG_PRINT(str(e))
 
@@ -206,7 +230,7 @@ class Strategy:
         pass
         
     ###### DO NOT CHANGE ######
-    async def __tick(self, timeframe_in_minutes):
+    async def _tick(self, timeframe_in_minutes):
         self.DEBUG_PRINT("Thread started.")
         var = True
 
@@ -228,6 +252,7 @@ class Strategy:
                     pass
                 self.lastCandle = self.currentCandle
                 await asyncio.sleep(1)
+                self.client.ping()
             except:
                 self.RetryLogin()
         self.DEBUG_PRINT("Thread stopped.")

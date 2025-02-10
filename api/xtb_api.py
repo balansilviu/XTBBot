@@ -142,13 +142,17 @@ class BaseClient(object):
         """send command with login check"""
         return self._login_decorator(self._send_command, dict_data)
 
-    def login(self, user_id, password, mode='demo'):
+    def login(self, user_id, password, mode='real'):
         self.username = user_id
         self.password = password
+        if str(user_id).startswith("1"):
+            _mode = "demo"
+        if str(user_id).startswith("5"):
+            _mode = "real"
         """login command"""
         data = _get_data("login", userId=user_id, password=password)
         # print(f"Sending data: {data}")  # For debugging
-        self.ws = create_connection(f"wss://ws.xtb.com/{mode}")
+        self.ws = create_connection(f"wss://ws.xtb.com/{_mode}")
         response = self._send_command(data)
         self._login_data = (user_id, password)
         self.status = STATUS.LOGGED
@@ -452,9 +456,9 @@ class Client(BaseClient):
         conversion_mode = {MODES.BUY.value: 'ask', MODES.SELL.value: 'bid'}
         price = self.get_symbol(symbol)[conversion_mode[mode]]
         if mode == MODES.BUY.value:
-            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price-stop_loss),5), take_profit=take_profit, price=price)
+            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price-stop_loss),5), take_profit=round((price+take_profit),5), price=price)
         else:
-            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price+stop_loss),5), take_profit=take_profit, price=price)
+            response = self.trade_transaction(symbol, mode, 0, volume, stop_loss=round((price+stop_loss),5), take_profit=round((price-take_profit),5), price=price)
         self.update_trades()
         status = self.trade_transaction_status(response['order'])['requestStatus']
         self.LOGGER.debug(f"open_trade completed with status of {status}")

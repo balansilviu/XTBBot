@@ -4,6 +4,7 @@ import ta
 import pandas as pd
 from enum import Enum
 import time
+from strategies.Strategy import MODES
 
 class Timeframe(Enum):
     M1 = 1
@@ -126,7 +127,7 @@ class DualEMA_Martingale(Strategy):
     def setLotSize(self):
         if self.firstSet == False:
             if self.WasLastTradeProfitable() == False:
-                self.currentLot = self.currentLot * 2
+                self.currentLot = self.currentLot + self.volume
                 if self.currentLot >= self.maximumLot:
                     self.currentLot = self.maximumLot 
             else:
@@ -178,7 +179,7 @@ class DualEMA_Martingale(Strategy):
             self.setLotSize()
             super().DEBUG_PRINT("============== BUY " + str(self.currentLot) + " ===============")
             self.transactionState = TransactionState.TRADE_OPEN
-            self.openTrade_stop_loss(self.currentLot, self.stopLoss)
+            self.openTrade_stop_loss(MODES.BUY.value, self.currentLot, self.stopLoss)
 
         elif self.transactionState == TransactionState.SELL:
             if self.ThereIsTransactionOpen() == True:

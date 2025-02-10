@@ -135,12 +135,7 @@ class MainWindowController:
 
     def Test1ButtonAction(self, chart, timeframe):
         strategy = Strategy(self.client, chart, timeframe, volume=0.1)
-
-        # self.strategy = DualEMA_Martingale(self.client, chart, 1, 10, 0.03, 20, 60)
-        self.strategy = DualEMA_Martingale(self.client, chart, 20, 60)
-        print(self.strategy.GetProperties())
-
-        self.strategy.openTrade_stop_loss(0.03, 15.9)
+        strategy.calculateATR(14, 1)
 
     def Test2ButtonAction(self, chart, timeframe):
         # print(self.client.get_last_closed_trade())
